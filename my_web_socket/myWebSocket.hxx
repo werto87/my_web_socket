@@ -1,16 +1,16 @@
-#ifndef FDE41782_20C3_436A_B415_E198F593F0AE
-#define FDE41782_20C3_436A_B415_E198F593F0AE
+#pragma once
 
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/thread_pool.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
 #include <fmt/color.h>
-#include <memory>
-#include <random>
-#include <string>
-namespace matchmaking_proxy
+namespace my_web_socket
 {
+
+typedef boost::beast::websocket::stream<boost::asio::use_awaitable_t<>::as_default_on_t<boost::beast::tcp_stream> > WebSocket;
+typedef boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream> > SSLWebSocket;
+typedef boost::asio::use_awaitable_t<>::as_default_on_t<boost::asio::basic_waitable_timer<boost::asio::chrono::system_clock> > CoroTimer;
 
 void printExceptionHelper (std::exception_ptr eptr);
 
@@ -27,22 +27,11 @@ auto const printException2 = [] (std::exception_ptr eptr, auto) { printException
 
 auto const printException = overloaded{ printException1, printException2 };
 
-template <typename T>
-T
-rndNumber ()
-{
-  static std::random_device rd;       // Get a random seed from the OS entropy device, or whatever
-  static std::mt19937_64 eng (rd ()); // Use the 64-bit Mersenne Twister 19937 generator
-  std::uniform_int_distribution<T> distr{};
-  return distr (eng);
-}
-
-template <class T> class MyWebsocket
+template <class T> class MyWebSocket
 {
 public:
-  explicit MyWebsocket (std::shared_ptr<T> webSocket_) : webSocket{ webSocket_ } {}
-  MyWebsocket (std::shared_ptr<T> webSocket_, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_) : webSocket{ webSocket_ }, loggingName{ std::move (loggingName_) }, loggingTextStyleForName{ std::move (loggingTextStyleForName_) }, id{ std::move (id_) } {}
-  boost::asio::awaitable<std::string> async_read_one_message ();
+  explicit MyWebSocket (T &&webSocket_) : webSocket{ std::make_shared<T> (std::move (webSocket_)) } {}
+  MyWebSocket (T &&webSocket_, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_) : webSocket{ std::make_shared<T> (std::move (webSocket_)) }, loggingName{ std::move (loggingName_) }, loggingTextStyleForName{ std::move (loggingTextStyleForName_) }, id{ std::move (id_) } {}
 
   boost::asio::awaitable<void> readLoop (std::function<void (std::string const &readResult)> onRead);
 
@@ -56,18 +45,17 @@ public:
 
   boost::asio::awaitable<void> sendPingToEndpoint ();
 
-private:
   std::shared_ptr<T> webSocket{};
+
+private:
+  std::string rndNumberAsString ();
+  boost::asio::awaitable<std::string> async_read_one_message ();
+
   std::string loggingName{};
   fmt::text_style loggingTextStyleForName{};
-  std::string id{ std::to_string (rndNumber<uint16_t> ()) };
+  std::string id{ rndNumberAsString () };
   std::deque<std::string> msgQueue{};
-  typedef boost::asio::use_awaitable_t<>::as_default_on_t<boost::asio::basic_waitable_timer<boost::asio::chrono::system_clock> > CoroTimer;
-
   std::shared_ptr<CoroTimer> timer{};
 };
 
-void printTagWithPadding (std::string const &tag, fmt::text_style const &style, size_t maxLength);
-
 }
-#endif /* FDE41782_20C3_436A_B415_E198F593F0AE */

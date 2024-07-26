@@ -20,6 +20,7 @@ IF (BUILD_TESTS)
     add_subdirectory(test)
 ENDIF (BUILD_TESTS)
 add_executable(run_main main.cxx)
+target_compile_definitions(run_main PUBLIC -DLOG_CO_SPAWN_PRINT_EXCEPTIONS)
 target_link_libraries(run_main my_web_socket)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

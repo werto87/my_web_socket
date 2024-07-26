@@ -1,27 +1,10 @@
 #include "my_web_socket/myWebSocket.hxx"
-#include <boost/asio/ssl.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/beast/websocket/ssl.hpp>
-#include <boost/numeric/conversion/cast.hpp>
-#include <boost/optional.hpp>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <deque>
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <fmt/printf.h>
 #include <iostream>
-#include <list>
-#include <queue>
-#include <set>
-#include <stdexcept>
-namespace matchmaking_proxy
+namespace my_web_socket
 {
 
-#ifdef LOG_CO_SPAWN_PRINT_EXCEPTIONS
+#ifdef MY_WEB_SOCKET_LOG_CO_SPAWN_PRINT_EXCEPTIONS
 void
 printExceptionHelper (std::exception_ptr eptr)
 {
@@ -50,22 +33,32 @@ printTagWithPadding (std::string const &tag, fmt::text_style const &style, size_
   if (maxLength < 3) throw std::logic_error{ "maxLength should be min 3" };
   if (tag.length () > maxLength)
     {
-      fmt::print (style, "[{:<" + std::to_string (maxLength) + "}]", std::string{ tag.begin (), tag.begin () + boost::numeric_cast<int> (maxLength) - 3 } + "...");
+      fmt::print (style, fmt::runtime ("[{:<" + std::to_string (maxLength) + "}]"), std::string{ tag.begin (), tag.begin () + boost::numeric_cast<int> (maxLength) - 3 } + "...");
     }
   else
     {
       fmt::print (style, "[{}]{}", tag, std::string (maxLength - tag.size (), '-'));
     }
 }
+
+template <class T>
+std::string
+MyWebSocket<T>::rndNumberAsString ()
+{
+  static std::random_device rd;       // Get a random seed from the OS entropy device, or whatever
+  static std::mt19937_64 eng (rd ()); // Use the 64-bit Mersenne Twister 19937 generator
+  std::uniform_int_distribution<uint64_t> distr{};
+  return std::to_string (distr (eng));
+}
+
 template <class T>
 boost::asio::awaitable<std::string>
-MyWebsocket<T>::async_read_one_message ()
+MyWebSocket<T>::async_read_one_message ()
 {
-
   boost::beast::flat_buffer buffer;
   co_await webSocket->async_read (buffer, boost::asio::use_awaitable);
   auto msg = boost::beast::buffers_to_string (buffer.data ());
-#ifdef MATCHMAKING_PROXY_LOG_MY_WEBSOCKET
+#ifdef MY_WEB_SOCKET_LOG_WRITE
   printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
   fmt::print ("[r] {}", msg);
   std::cout << std::endl;
@@ -75,7 +68,7 @@ MyWebsocket<T>::async_read_one_message ()
 
 template <class T>
 inline boost::asio::awaitable<void>
-MyWebsocket<T>::readLoop (std::function<void (std::string const &readResult)> onRead)
+MyWebSocket<T>::readLoop (std::function<void (std::string const &readResult)> onRead)
 {
   try
     {
@@ -89,7 +82,7 @@ MyWebsocket<T>::readLoop (std::function<void (std::string const &readResult)> on
     {
       webSocket.reset ();
       if (timer) timer->cancel ();
-#ifdef MATCHMAKING_PROXY_LOG_MY_WEBSOCKET_READ_END
+#ifdef MY_WEB_SOCKET_LOG_READ_END
       printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
       fmt::print ("[c]");
       std::cout << std::endl;
@@ -99,9 +92,9 @@ MyWebsocket<T>::readLoop (std::function<void (std::string const &readResult)> on
 }
 template <class T>
 inline boost::asio::awaitable<void>
-MyWebsocket<T>::async_write_one_message (std::string message)
+MyWebSocket<T>::async_write_one_message (std::string message)
 {
-#ifdef MATCHMAKING_PROXY_LOG_MY_WEBSOCKET
+#ifdef MY_WEB_SOCKET_LOG_WRITE
   printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
   fmt::print ("[w] {}", message);
   std::cout << std::endl;
@@ -110,7 +103,7 @@ MyWebsocket<T>::async_write_one_message (std::string message)
 }
 template <class T>
 inline boost::asio::awaitable<void>
-MyWebsocket<T>::writeLoop ()
+MyWebSocket<T>::writeLoop ()
 {
   auto connection = std::weak_ptr<T>{ webSocket };
   try
@@ -125,8 +118,7 @@ MyWebsocket<T>::writeLoop ()
             }
           catch (boost::system::system_error &e)
             {
-              using namespace boost::system::errc;
-              if (operation_canceled == e.code ())
+              if (boost::system::errc::operation_canceled == e.code ())
                 {
                   //  swallow cancel
                 }
@@ -153,18 +145,18 @@ MyWebsocket<T>::writeLoop ()
 }
 template <class T>
 inline void
-MyWebsocket<T>::sendMessage (std::string message)
+MyWebSocket<T>::sendMessage (std::string message)
 {
   msgQueue.push_back (std::move (message));
   if (timer) timer->cancel ();
 }
 template <class T>
 inline void
-MyWebsocket<T>::close ()
+MyWebSocket<T>::close ()
 {
   try
     {
-      if (webSocket) webSocket->close ("User left game");
+      if (webSocket) webSocket->close ("close connection");
     }
   catch (boost::system::system_error &e)
     {
@@ -174,7 +166,7 @@ MyWebsocket<T>::close ()
         }
       else
         {
-          std::cout << "MyWebsocket::close () Exception : " << e.what () << std::endl;
+          std::cout << "MyWebSocket::close () Exception : " << e.what () << std::endl;
           abort ();
         }
     }
@@ -182,7 +174,7 @@ MyWebsocket<T>::close ()
 
 template <class T>
 boost::asio::awaitable<void>
-MyWebsocket<T>::sendPingToEndpoint ()
+MyWebSocket<T>::sendPingToEndpoint ()
 {
   auto connection = std::weak_ptr<T>{ webSocket };
   auto pingTimer = CoroTimer{ co_await boost::asio::this_coro::executor };
@@ -206,7 +198,7 @@ MyWebsocket<T>::sendPingToEndpoint ()
   co_return;
 }
 typedef boost::beast::websocket::stream<boost::asio::use_awaitable_t<>::as_default_on_t<boost::beast::tcp_stream> > Websocket;
-template class MyWebsocket<Websocket>;
+template class MyWebSocket<Websocket>;
 typedef boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream> > SSLWebsocket;
-template class MyWebsocket<SSLWebsocket>;
+template class MyWebSocket<SSLWebsocket>;
 }
