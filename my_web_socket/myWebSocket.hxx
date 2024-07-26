@@ -4,6 +4,7 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#include <deque>
 #include <fmt/color.h>
 namespace my_web_socket
 {

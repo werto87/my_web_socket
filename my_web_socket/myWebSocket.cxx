@@ -80,7 +80,7 @@ MyWebSocket<T>::readLoop (std::function<void (std::string const &readResult)> on
     }
   catch (...)
     {
-      webSocket.reset ();
+      if (webSocket) webSocket.reset ();
       if (timer) timer->cancel ();
 #ifdef MY_WEB_SOCKET_LOG_READ_END
       printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);

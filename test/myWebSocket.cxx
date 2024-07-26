@@ -9,9 +9,9 @@ sendMessageToWebSocketAndStartReading (std::string message)
   auto endpoint = boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4 (), 11111 };
   co_await boost::beast::get_lowest_layer (webSocket).async_connect (endpoint);
   co_await webSocket.async_handshake (endpoint.address ().to_string () + std::to_string (endpoint.port ()), "/");
-  auto myWebSocket = my_web_socket::MyWebSocket{ std::move (webSocket) };
-  boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket.readLoop ([] (std::string msg) { std::cout << msg << std::endl; }), my_web_socket::printException);
-  co_await myWebSocket.async_write_one_message (message);
+  auto myWebSocket = std::make_shared<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > (my_web_socket::MyWebSocket{ std::move (webSocket) });
+  boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([myWebSocket] (std::string msg) { std::cout << msg << std::endl; }), my_web_socket::printException);
+  co_await myWebSocket->async_write_one_message (message);
 }
 TEST_CASE ("mockServerOption.shutDownServerOnMessage")
 {

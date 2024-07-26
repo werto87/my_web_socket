@@ -7,6 +7,7 @@
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/beast/websocket.hpp>
+#include <condition_variable>
 #include <cstddef>
 #include <exception>
 #include <iostream>
@@ -87,9 +88,9 @@ struct MockServer
                 }
               if (_mockserverOption.shutDownServerOnMessage && _mockserverOption.shutDownServerOnMessage.value () == msg)
                 {
-                  for (auto &webSocket : _webSockets)
+                  for (auto &webSocket_ : _webSockets)
                     {
-                      webSocket.close ();
+                      webSocket_.close ();
                     }
                   _ioContext.stop ();
                 }
