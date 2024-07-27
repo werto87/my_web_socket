@@ -40,7 +40,7 @@ public:
 
   boost::asio::awaitable<void> writeLoop ();
 
-  void sendMessage (std::string message);
+  void queueMessage (std::string message);
 
   void close ();
 

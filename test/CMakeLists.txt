@@ -1,5 +1,7 @@
 add_executable(_test
         mockServer.cxx
+        myWebSocket.cxx
+        util.cxx
         )
 find_package(Catch2)
 target_link_libraries(_test

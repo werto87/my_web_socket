@@ -1,33 +1,5 @@
-#include "my_web_socket/mockServer.hxx"
-#include <boost/asio/co_spawn.hpp>
+#include "util.hxx"
 #include <catch2/catch.hpp>
-#include <iostream>
-template <typename T>
-boost::asio::awaitable<void>
-sendMessageToWebSocketStartReadingHandleResponse (T messages, std::function<void (std::string, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >)> handleResponse = {})
-{
-  auto webSocket = my_web_socket::WebSocket{ co_await boost::asio::this_coro::executor };
-  auto endpoint = boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4 (), 11111 };
-  co_await boost::beast::get_lowest_layer (webSocket).async_connect (endpoint);
-  co_await webSocket.async_handshake (endpoint.address ().to_string () + std::to_string (endpoint.port ()), "/");
-  auto myWebSocket = std::make_shared<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > (my_web_socket::MyWebSocket{ std::move (webSocket) });
-  boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([myWebSocket, handleResponse] (std::string msg) {
-    if (handleResponse) handleResponse (msg, myWebSocket);
-  }),
-                         my_web_socket::printException);
-  using messageTyp = std::decay_t<T>;
-  if constexpr (std::is_convertible_v<messageTyp, std::string>)
-    {
-      co_await myWebSocket->async_write_one_message (messages);
-    }
-  else
-    {
-      for (auto const &message : messages)
-        {
-          co_await myWebSocket->async_write_one_message (message);
-        }
-    }
-}
 
 TEST_CASE ("mockServerOption")
 {

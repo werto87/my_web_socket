@@ -118,7 +118,7 @@ struct MockServer
                   webSocketItr->close ();
                 }
               else if (_mockServerOption.requestResponse.count (msg))
-                webSocketItr->sendMessage (_mockServerOption.requestResponse.at (msg));
+                webSocketItr->queueMessage (_mockServerOption.requestResponse.at (msg));
               else if (not _mockServerOption.requestStartsWithResponse.empty ())
                 {
                   auto msgFound = false;
@@ -127,7 +127,7 @@ struct MockServer
                       if (boost::starts_with (msg, startsWith))
                         {
                           msgFound = true;
-                          webSocketItr->sendMessage (response);
+                          webSocketItr->queueMessage (response);
                           break;
                         }
                     }
@@ -137,9 +137,9 @@ struct MockServer
                     }
                 }
             }) && webSocketItr->writeLoop (),
-                                   [&_websockets = webSockets, webSocketItr] (auto eptr) {
+                                   [&_webSockets = webSockets, webSocketItr] (auto eptr) {
                                      printException (eptr);
-                                     _websockets.erase (webSocketItr);
+                                     _webSockets.erase (webSocketItr);
                                    });
             if (mockServerOption.mockServerRunTime)
               {

@@ -145,7 +145,7 @@ MyWebSocket<T>::writeLoop ()
 }
 template <class T>
 inline void
-MyWebSocket<T>::sendMessage (std::string message)
+MyWebSocket<T>::queueMessage (std::string message)
 {
   msgQueue.push_back (std::move (message));
   if (timer) timer->cancel ();
