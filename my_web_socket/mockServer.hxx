@@ -119,7 +119,7 @@ struct MockServer
                 }
               else if (_mockServerOption.requestResponse.count (msg))
                 webSocketItr->sendMessage (_mockServerOption.requestResponse.at (msg));
-              else
+              else if (not _mockServerOption.requestStartsWithResponse.empty ())
                 {
                   auto msgFound = false;
                   for (auto const &[startsWith, response] : _mockServerOption.requestStartsWithResponse)
