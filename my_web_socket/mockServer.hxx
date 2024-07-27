@@ -26,6 +26,7 @@ struct MockServerOption
   std::optional<std::string> closeConnectionOnMessage{};
   std::map<std::string, std::string> requestResponse{};
   std::map<std::string, std::string> requestStartsWithResponse{};
+  std::optional<std::chrono::microseconds> mockServerRunTime{};
 };
 
 struct MockServer
@@ -52,6 +53,19 @@ struct MockServer
       {
         if (onDestruct) onDestruct ();
       }
+  }
+
+  boost::asio::awaitable<void>
+  serverShutDownTime ()
+  {
+    auto timer = CoroTimer{ co_await boost::asio::this_coro::executor };
+    timer.expires_after (mockServerOption.mockServerRunTime.value ());
+    co_await timer.async_wait ();
+    for (auto &myWebSocket : webSockets)
+      {
+        myWebSocket.close ();
+      }
+    ioContext.stop ();
   }
 
   boost::asio::awaitable<void>
@@ -127,6 +141,10 @@ struct MockServer
                                      printException (eptr);
                                      _websockets.erase (webSocketItr);
                                    });
+            if (mockServerOption.mockServerRunTime)
+              {
+                co_spawn (ioContext, serverShutDownTime (), printException);
+              }
           }
         catch (std::exception const &e)
           {
@@ -135,8 +153,14 @@ struct MockServer
           }
       }
   }
+
+  bool
+  isRunning ()
+  {
+    return not ioContext.stopped ();
+  }
+
   MockServerOption mockServerOption{};
-  bool shouldRun = true;
   boost::asio::io_context ioContext;
   std::thread thread{};
   std::list<MyWebSocket<WebSocket> > webSockets{ {} };

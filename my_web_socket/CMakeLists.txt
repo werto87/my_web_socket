@@ -10,7 +10,7 @@ add_library(my_web_socket myWebSocket.cxx)
 
 add_library(myproject::my_web_socket ALIAS my_web_socket)
 target_compile_definitions(my_web_socket PUBLIC 
-# MY_WEB_SOCKET_LOG_CO_SPAWN_PRINT_EXCEPTIONS
+MY_WEB_SOCKET_LOG_CO_SPAWN_PRINT_EXCEPTIONS
 # MY_WEB_SOCKET_LOG_WRITE
 # MY_WEB_SOCKET_LOG_READ_END
 )

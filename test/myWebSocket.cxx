@@ -88,3 +88,36 @@ TEST_CASE ("mockServerOption.requestResponse")
                          my_web_socket::printException);
   ioContext.run ();
 }
+
+TEST_CASE ("mockServerOption.mockServerRunTime")
+{
+  auto ioContext = boost::asio::io_context{};
+  auto mockServerOption = my_web_socket::MockServerOption{};
+  mockServerOption.mockServerRunTime = std::chrono::microseconds{ 100 };
+  using std::chrono::duration;
+  using std::chrono::duration_cast;
+  using std::chrono::high_resolution_clock;
+  using std::chrono::milliseconds;
+  auto mockServer = my_web_socket::MockServer{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+  boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("request"), my_web_socket::printException);
+  auto t1 = high_resolution_clock::now ();
+  ioContext.run_for (std::chrono::seconds{ 2 });
+  auto t2 = high_resolution_clock::now ();
+  REQUIRE ((t2 - t1) < std::chrono::milliseconds{ 100 });
+}
+
+TEST_CASE ("mockServerOption.requestStartsWithResponse")
+{
+  auto ioContext = boost::asio::io_context{};
+  auto mockServerOption = my_web_socket::MockServerOption{};
+  mockServerOption.requestStartsWithResponse["req"] = "response";
+  auto mockServer = my_web_socket::MockServer{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+  boost::asio::co_spawn (ioContext,
+                         sendMessageToWebSocketStartReadingHandleResponse ("request",
+                                                                           [] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                             REQUIRE (msg == "response");
+                                                                             myWebSocket->close ();
+                                                                           }),
+                         my_web_socket::printException);
+  ioContext.run ();
+}
