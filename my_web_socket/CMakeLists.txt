@@ -38,6 +38,7 @@ set_target_properties(
 
 install(FILES
         myWebSocket.hxx
+        mockServer.hxx
         DESTINATION include/my_web_socket
         )
 install(TARGETS my_web_socket DESTINATION lib)

@@ -20,16 +20,17 @@ namespace my_web_socket
 {
 struct MockServerOption
 {
+  std::map<std::string, std::function<void ()> > callOnMessageStartsWith{};
+  std::vector<std::function<void ()> > callAtTheEndOFDestruct{};
   std::optional<std::string> shutDownServerOnMessage{};
   std::optional<std::string> closeConnectionOnMessage{};
   std::map<std::string, std::string> requestResponse{};
   std::map<std::string, std::string> requestStartsWithResponse{};
-  std::map<std::string, std::function<void ()> > callOnMessageStartsWith{};
 };
 
 struct MockServer
 {
-  MockServer (boost::asio::ip::tcp::endpoint endpoint, MockServerOption const &mockserverOption_, std::string loggingName_ = {}, fmt::text_style loggingTextStyleForName_ = {}, std::string id_ = {}) : mockserverOption{ mockserverOption_ }
+  MockServer (boost::asio::ip::tcp::endpoint endpoint, MockServerOption const &mockServerOption_, std::string loggingName_ = {}, fmt::text_style loggingTextStyleForName_ = {}, std::string id_ = {}) : mockServerOption{ mockServerOption_ }
   {
     co_spawn (ioContext, listener (endpoint, loggingName_, loggingTextStyleForName_, id_), printException);
     thread = std::thread{ [this] () { ioContext.run (); } };
@@ -47,6 +48,10 @@ struct MockServer
   {
     ioContext.stop ();
     thread.join ();
+    for (auto &onDestruct : mockServerOption.callAtTheEndOFDestruct)
+      {
+        if (onDestruct) onDestruct ();
+      }
   }
 
   boost::asio::awaitable<void>
@@ -77,8 +82,8 @@ struct MockServer
             co_await webSocket.async_accept ();
             webSockets.emplace_back (MyWebSocket<WebSocket>{ std::move (webSocket), loggingName_, loggingTextStyleForName_, id_ });
             std::list<MyWebSocket<WebSocket> >::iterator webSocketItr = std::prev (webSockets.end ());
-            boost::asio::co_spawn (executor, webSocketItr->readLoop ([&_webSockets = webSockets, webSocketItr, &_mockserverOption = mockserverOption, &_ioContext = ioContext] (const std::string &msg) mutable {
-              for (auto const &[startsWith, callback] : _mockserverOption.callOnMessageStartsWith)
+            boost::asio::co_spawn (executor, webSocketItr->readLoop ([&_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (const std::string &msg) mutable {
+              for (auto const &[startsWith, callback] : _mockServerOption.callOnMessageStartsWith)
                 {
                   if (boost::starts_with (msg, startsWith))
                     {
@@ -86,7 +91,7 @@ struct MockServer
                       break;
                     }
                 }
-              if (_mockserverOption.shutDownServerOnMessage && _mockserverOption.shutDownServerOnMessage.value () == msg)
+              if (_mockServerOption.shutDownServerOnMessage && _mockServerOption.shutDownServerOnMessage.value () == msg)
                 {
                   for (auto &webSocket_ : _webSockets)
                     {
@@ -94,16 +99,16 @@ struct MockServer
                     }
                   _ioContext.stop ();
                 }
-              else if (_mockserverOption.closeConnectionOnMessage && _mockserverOption.closeConnectionOnMessage.value () == msg)
+              else if (_mockServerOption.closeConnectionOnMessage && _mockServerOption.closeConnectionOnMessage.value () == msg)
                 {
                   webSocketItr->close ();
                 }
-              else if (_mockserverOption.requestResponse.count (msg))
-                webSocketItr->sendMessage (_mockserverOption.requestResponse.at (msg));
+              else if (_mockServerOption.requestResponse.count (msg))
+                webSocketItr->sendMessage (_mockServerOption.requestResponse.at (msg));
               else
                 {
                   auto msgFound = false;
-                  for (auto const &[startsWith, response] : _mockserverOption.requestStartsWithResponse)
+                  for (auto const &[startsWith, response] : _mockServerOption.requestStartsWithResponse)
                     {
                       if (boost::starts_with (msg, startsWith))
                         {
@@ -130,7 +135,7 @@ struct MockServer
           }
       }
   }
-  MockServerOption mockserverOption{};
+  MockServerOption mockServerOption{};
   bool shouldRun = true;
   boost::asio::io_context ioContext;
   std::thread thread{};
