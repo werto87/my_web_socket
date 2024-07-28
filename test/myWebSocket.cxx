@@ -35,7 +35,7 @@ TEST_CASE ("myWebSocket")
         ioContext,
         [&success, &ioContext] () -> boost::asio::awaitable<void> {
           auto myWebSocket = co_await createMyWebSocket ();
-          boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([&success, &ioContext] (std::string message) {
+          boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([&success, &ioContext, myWebSocket] (std::string message) {
             if (message == "response")
               {
                 success = true;
