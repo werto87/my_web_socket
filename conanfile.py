@@ -19,7 +19,7 @@ class Project(ConanFile):
         self.options["boost"].header_only = True
 
     def requirements(self):
-        self.requires("catch2/2.13.7")
         self.requires("boost/1.85.0", force=True)
         self.requires("certify/cci.20201114")
         self.requires("fmt/11.0.2")
+        self.requires("catch2/2.13.7")
