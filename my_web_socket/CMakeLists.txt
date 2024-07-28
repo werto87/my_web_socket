@@ -10,21 +10,21 @@ add_library(my_web_socket myWebSocket.cxx)
 
 add_library(myproject::my_web_socket ALIAS my_web_socket)
 set(Logging)
-if(LOG_CO_SPAWN_PRINT_EXCEPTIONS)
+if(true)
   list(APPEND Logging MY_WEB_SOCKET_LOG_CO_SPAWN_PRINT_EXCEPTIONS)
 endif()
-if(LOG_WRITE)
+if(true)
   list(APPEND Logging MY_WEB_SOCKET_LOG_WRITE)
 endif()
-if(LOG_READ)
+if(true)
   list(APPEND Logging MY_WEB_SOCKET_LOG_READ)
 endif()
-if(LOG_BOOST_ASIO)
+if(true)
   list(APPEND Logging BOOST_ASIO_ENABLE_HANDLER_TRACKING)
 endif()
 
 target_compile_definitions(my_web_socket PUBLIC 
-Logging
+${Logging}
 )
 find_package(certify)
 find_package(fmt)
