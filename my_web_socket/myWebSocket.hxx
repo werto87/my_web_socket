@@ -31,6 +31,7 @@ auto const printException = overloaded{ printException1, printException2 };
 template <class T> class MyWebSocket
 {
 public:
+  MyWebSocket () = default;
   explicit MyWebSocket (T &&webSocket_) : webSocket{ std::make_shared<T> (std::move (webSocket_)) } {}
   MyWebSocket (T &&webSocket_, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_) : webSocket{ std::make_shared<T> (std::move (webSocket_)) }, loggingName{ std::move (loggingName_) }, loggingTextStyleForName{ std::move (loggingTextStyleForName_) }, id{ std::move (id_) } {}
 

@@ -163,7 +163,7 @@ struct MockServer
   MockServerOption mockServerOption{};
   boost::asio::io_context ioContext;
   std::thread thread{};
-  std::list<MyWebSocket<WebSocket> > webSockets{ {} };
+  std::list<MyWebSocket<WebSocket> > webSockets{};
   std::mutex waitForServerStarted{};
   std::condition_variable waitForServerStartedCond;
   bool serverStarted = false;
