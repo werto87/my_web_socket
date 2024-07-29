@@ -47,11 +47,12 @@ public:
 
   boost::asio::awaitable<void> sendPingToEndpoint ();
 
+  boost::asio::awaitable<std::string> async_read_one_message ();
+
   std::shared_ptr<T> webSocket{};
 
 private:
   std::string rndNumberAsString ();
-  boost::asio::awaitable<std::string> async_read_one_message ();
 
   std::string loggingName{};
   fmt::text_style loggingTextStyleForName{};
