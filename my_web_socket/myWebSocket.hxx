@@ -13,21 +13,6 @@ typedef boost::beast::websocket::stream<boost::asio::use_awaitable_t<>::as_defau
 typedef boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream> > SSLWebSocket;
 typedef boost::asio::use_awaitable_t<>::as_default_on_t<boost::asio::basic_waitable_timer<boost::asio::chrono::system_clock> > CoroTimer;
 
-void printExceptionHelper (std::exception_ptr eptr);
-
-template <class... Fs> struct overloaded : Fs...
-{
-  using Fs::operator()...;
-};
-
-template <class... Fs> overloaded (Fs...) -> overloaded<Fs...>;
-
-auto const printException1 = [] (std::exception_ptr eptr) { printExceptionHelper (eptr); };
-
-auto const printException2 = [] (std::exception_ptr eptr, auto) { printExceptionHelper (eptr); };
-
-auto const printException = overloaded{ printException1, printException2 };
-
 template <class T> class MyWebSocket
 {
 public:

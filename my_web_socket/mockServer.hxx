@@ -1,5 +1,6 @@
 #pragma once
 
+#include "my_web_socket/coSpawnPrintException.hxx"
 #include "my_web_socket/myWebSocket.hxx"
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/co_spawn.hpp>
