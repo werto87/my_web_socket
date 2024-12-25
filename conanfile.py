@@ -16,10 +16,9 @@ class Project(ConanFile):
         # We can control the options of our dependencies based on current options
         self.options["catch2"].with_main = True
         self.options["catch2"].with_benchmark = True
-        self.options["boost"].header_only = True
 
     def requirements(self):
         self.requires("boost/1.85.0", force=True)
-        self.requires("certify/cci.20201114")
+        self.requires("certify/cci.20201114@modern-durak")
         self.requires("fmt/11.0.2")
         self.requires("catch2/2.13.7")

@@ -33,7 +33,7 @@ find_package(certify)
 find_package(fmt)
 find_package(Boost)
 target_link_libraries(my_web_socket PUBLIC
-        boost::boost
+        Boost::headers
         certify::core
         fmt::fmt
 )
