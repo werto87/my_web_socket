@@ -1,4 +1,5 @@
 #include "my_web_socket/myWebSocket.hxx"
+#include "my_web_socket/coSpawnPrintException.hxx"
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <iostream>
 namespace my_web_socket

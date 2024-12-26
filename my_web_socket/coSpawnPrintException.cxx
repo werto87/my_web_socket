@@ -2,6 +2,7 @@
 #include "my_web_socket/coSpawnPrintException.hxx"
 #include <boost/numeric/conversion/cast.hpp>
 #include <fmt/color.h>
+#include <iostream>
 namespace my_web_socket
 {
 
