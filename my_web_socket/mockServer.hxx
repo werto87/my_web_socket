@@ -79,8 +79,10 @@ struct MockServer
             using namespace boost::asio::experimental::awaitable_operators;
             if (not serverStarted)
               {
-                std::lock_guard<std::mutex> lk{ waitForServerStarted };
-                serverStarted = true; // Set 'serverStarted' to true before notifying.
+                {
+                  std::lock_guard<std::mutex> lk{ waitForServerStarted };
+                  serverStarted = true; // Set 'serverStarted' to true before notifying.
+                }
                 waitForServerStartedCond.notify_all ();
               }
             auto socket = co_await (acceptor.async_accept ());
