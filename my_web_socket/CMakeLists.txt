@@ -28,7 +28,6 @@ endif()
 
 target_compile_definitions(my_web_socket PUBLIC 
 ${Logging}
-BOOST_ASIO_DISABLE_EPOLL
 )
 find_package(certify)
 find_package(fmt)
