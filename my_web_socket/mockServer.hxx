@@ -37,13 +37,7 @@ struct MockServer
     co_spawn (ioContext, listener (endpoint, loggingName_, loggingTextStyleForName_, id_), printException);
     thread = std::thread{ [this] () { ioContext.run (); } };
     std::unique_lock<std::mutex> lk{ waitForServerStarted };
-    // block main thread until server is started
-    // blocking code based on https://stackoverflow.com/questions/43675995/is-my-wait-notify-mechanism-using-stdmutex-correct
-    while (!serverStarted)
-      { // Wait inside loop to handle spurious wakeups etc.
-
-        waitForServerStartedCond.wait (lk);
-      }
+    waitForServerStartedCond.wait (lk, [this] { return serverStarted; });
   }
 
   ~MockServer ()
