@@ -37,7 +37,7 @@ struct MockServer
     co_spawn (ioContext, listener (endpoint, loggingName_, loggingTextStyleForName_, id_), printException);
     thread = std::thread{ [this] () { ioContext.run (); } };
     std::unique_lock<std::mutex> lk{ waitForServerStarted };
-    waitForServerStartedCond.wait (lk, [this] { return serverStarted; });
+    waitForServerStartedCond.wait (lk, [this] { return serverStarted; }); // checks if serverStarted is true and if not waits for waitForServerStartedCond notify and serverStarted == true
   }
 
   ~MockServer ()
