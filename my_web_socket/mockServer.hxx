@@ -87,7 +87,6 @@ struct MockServer
               {
                 std::lock_guard<std::mutex> lk{ waitForServerStarted };
                 serverStarted = true; // Set 'serverStarted' to true before notifying.
-                waitForServerStarted.unlock ();
                 waitForServerStartedCond.notify_all ();
               }
             auto socket = co_await (acceptor.async_accept ());
