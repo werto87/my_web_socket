@@ -56,7 +56,7 @@ template <class T> MockServer<T>::MockServer (boost::asio::ip::tcp::endpoint end
     {
       if (mockServerOption.sslSupport.has_value ())
         {
-          sslContext = std::make_unique<boost::beast::net::ssl::context> (createSSLContext (mockServerOption.sslSupport.value (), boost::asio::ssl::context_base::method::tls_server));
+          sslContext = createSSLContext (mockServerOption.sslSupport.value (), boost::asio::ssl::context_base::method::tls_server);
         }
       else
         {

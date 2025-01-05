@@ -58,6 +58,6 @@ private:
   std::mutex waitForServerStarted{};
   std::condition_variable waitForServerStartedCond;
   bool serverStarted = false;
-  std::unique_ptr<boost::beast::net::ssl::context> sslContext{};
+  std::optional<boost::beast::net::ssl::context> sslContext{};
 };
 }
