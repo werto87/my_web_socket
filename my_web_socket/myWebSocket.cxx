@@ -161,8 +161,6 @@ MyWebSocket<T>::sendPingToEndpoint ()
     }
   co_return;
 }
-typedef boost::beast::websocket::stream<boost::asio::use_awaitable_t<>::as_default_on_t<boost::beast::tcp_stream> > Websocket;
-template class MyWebSocket<Websocket>;
-typedef boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream> > SSLWebsocket;
-template class MyWebSocket<SSLWebsocket>;
+template class MyWebSocket<WebSocket>;
+template class MyWebSocket<SSLWebSocket>;
 }

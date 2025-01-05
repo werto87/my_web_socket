@@ -1,7 +1,9 @@
 #pragma once
 #include "my_web_socket/mockServer.hxx"
 #include <boost/asio/co_spawn.hpp>
+
 boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > > createMyWebSocket (boost::asio::ip::tcp::endpoint endpoint = { boost::asio::ip::tcp::v4 (), 11111 });
+boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > > createMySSLWebSocketClient (boost::beast::net::ssl::context &ctx, boost::asio::ip::tcp::endpoint endpoint = { boost::asio::ip::tcp::v4 (), 11111 });
 
 template <typename T>
 boost::asio::awaitable<void>

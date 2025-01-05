@@ -8,6 +8,7 @@
 add_library(my_web_socket
 myWebSocket.cxx
 coSpawnPrintException.cxx
+mockServer.cxx
 )
 
 
