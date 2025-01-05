@@ -127,10 +127,44 @@ TEST_CASE ("my_web_socket::WebSocket")
 {
   supperTest<my_web_socket::WebSocket> ({}, [] () -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > > { return createMyWebSocket (); });
 }
+TEST_CASE ("my_web_socket::SSLWebSocket without ssl check")
+{
+  auto mockServerOption = my_web_socket::MockServerOption{};
+  mockServerOption.createSSLContext = [] () {
+    auto sslContext = boost::beast::net::ssl::context{ boost::asio::ssl::context_base::method::tls_server };
+    sslContext.set_verify_mode (boost::asio::ssl::context::verify_none);
+    // TODO use test Cert for SERVER do not forget to use verify_none of this test
+    //  sslContext.set_verify_mode (boost::asio::ssl::context::verify_peer);
+    //  sslContext.set_default_verify_paths ();
+    //  sslContext.use_certificate_chain_file (sslSupport.pathToChainFile);
+    //  sslContext.use_private_key_file (sslSupport.pathToPrivateFile, boost::asio::ssl::context::pem);
+    //  sslContext.use_tmp_dh_file (sslSupport.pathToTmpDhFile);
+    //  boost::certify::enable_native_https_server_verification (sslContext);
+    // sslContext.set_options (SSL_SESS_CACHE_OFF | SSL_OP_NO_TICKET); //  disable ssl cache. It has a bad support in boost asio/beast and I do not know if it helps in performance in our usecase
+    return sslContext;
+  };
+  // TODO use test Cert for CLIENT
+  auto sslContext = boost::beast::net::ssl::context{ boost::beast::net::ssl::context::tlsv12_client };
+  supperTest<my_web_socket::SSLWebSocket> (mockServerOption, [&sslContext] () -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > > { return createMySSLWebSocketClient (sslContext); });
+}
+
 TEST_CASE ("my_web_socket::SSLWebSocket")
 {
   auto mockServerOption = my_web_socket::MockServerOption{};
-  mockServerOption.sslSupport = { std::string{ "/etc/letsencrypt/live/test-name/fullchain.pem" }, std::string{ "/etc/letsencrypt/live/test-name/privkey.pem" }, std::string{ "/etc/letsencrypt/live/test-name/dhparams.pem" }, true };
-  auto sslContext = createSSLContext (mockServerOption.sslSupport.value (), boost::beast::net::ssl::context::tlsv12_client);
+  mockServerOption.createSSLContext = [] () {
+    auto sslContext = boost::beast::net::ssl::context{ boost::asio::ssl::context_base::method::tls_server };
+    sslContext.set_verify_mode (boost::asio::ssl::context::verify_none);
+    // TODO use test Cert for SERVER
+    //  sslContext.set_verify_mode (boost::asio::ssl::context::verify_peer);
+    //  sslContext.set_default_verify_paths ();
+    //  sslContext.use_certificate_chain_file (sslSupport.pathToChainFile);
+    //  sslContext.use_private_key_file (sslSupport.pathToPrivateFile, boost::asio::ssl::context::pem);
+    //  sslContext.use_tmp_dh_file (sslSupport.pathToTmpDhFile);
+    //  boost::certify::enable_native_https_server_verification (sslContext);
+    // sslContext.set_options (SSL_SESS_CACHE_OFF | SSL_OP_NO_TICKET); //  disable ssl cache. It has a bad support in boost asio/beast and I do not know if it helps in performance in our usecase
+    return sslContext;
+  };
+  // TODO use test Cert for CLIENT do not forget to use verify_none of this test
+  auto sslContext = boost::beast::net::ssl::context{ boost::beast::net::ssl::context::tlsv12_client };
   supperTest<my_web_socket::SSLWebSocket> (mockServerOption, [&sslContext] () -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > > { return createMySSLWebSocketClient (sslContext); });
 }

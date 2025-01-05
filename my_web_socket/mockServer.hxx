@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <exception>
 #include <filesystem>
+#include <functional>
 #include <iostream>
 #include <list>
 #include <map>
@@ -28,9 +29,6 @@ struct SSLSuport
   bool sslContextVerifyNone{};
 };
 
-boost::asio::awaitable<void> tryUntilNoException (std::function<void ()> const &fun, std::chrono::seconds const &timeToWaitBeforeCallingFunctionAgain);
-boost::beast::net::ssl::context createSSLContext (SSLSuport const &sslSupport, boost::asio::ssl::context_base::method const &method);
-
 struct MockServerOption
 {
   std::map<std::string, std::function<void ()> > callOnMessageStartsWith{};
@@ -40,7 +38,7 @@ struct MockServerOption
   std::map<std::string, std::string> requestResponse{};
   std::map<std::string, std::string> requestStartsWithResponse{};
   std::optional<std::chrono::microseconds> mockServerRunTime{};
-  std::optional<SSLSuport> sslSupport{};
+  std::function<boost::beast::net::ssl::context ()> createSSLContext{};
 };
 template <class T> struct MockServer
 {

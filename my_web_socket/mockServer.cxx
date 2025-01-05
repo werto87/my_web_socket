@@ -8,31 +8,10 @@
 namespace my_web_socket
 {
 
-boost::asio::awaitable<void>
-tryUntilNoException (std::function<void ()> const &fun, std::chrono::seconds const &timeToWaitBeforeCallingFunctionAgain)
-{
-  for (;;) // try until no exception
-    {
-      try
-        {
-          fun ();
-          break;
-        }
-      catch (std::exception &e)
-        {
-          std::cout << "exception : " << e.what () << std::endl;
-        }
-      std::cout << "trying again in: " << timeToWaitBeforeCallingFunctionAgain.count () << " seconds" << std::endl;
-      auto timer = CoroTimer{ co_await boost::asio::this_coro::executor };
-      timer.expires_after (timeToWaitBeforeCallingFunctionAgain);
-      co_await timer.async_wait ();
-    }
-}
-
 boost::beast::net::ssl::context
-createSSLContext (SSLSuport const &sslSupport, boost::asio::ssl::context_base::method const &method)
+createSSLContextServer (SSLSuport const &sslSupport)
 {
-  auto sslContext = boost::beast::net::ssl::context{ method };
+  auto sslContext = boost::beast::net::ssl::context{ boost::asio::ssl::context_base::method::tls_server };
   if (sslSupport.sslContextVerifyNone)
     {
       sslContext.set_verify_mode (boost::asio::ssl::context::verify_none);
@@ -54,9 +33,9 @@ template <class T> MockServer<T>::MockServer (boost::asio::ip::tcp::endpoint end
 {
   if (std::same_as<T, SSLWebSocket>)
     {
-      if (mockServerOption.sslSupport.has_value ())
+      if (mockServerOption.createSSLContext)
         {
-          sslContext = createSSLContext (mockServerOption.sslSupport.value (), boost::asio::ssl::context_base::method::tls_server);
+          sslContext = mockServerOption.createSSLContext ();
         }
       else
         {
