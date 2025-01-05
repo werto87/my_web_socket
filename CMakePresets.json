@@ -64,7 +64,8 @@
                 "BUILD_TESTS": "True",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
-                "myproject_ENABLE_HARDENING": "OFF"
+                "myproject_ENABLE_HARDENING": "OFF",
+                "myproject_WARNINGS_AS_ERRORS": "OFF"
             }
         },
         {
