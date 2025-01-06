@@ -133,6 +133,7 @@ TEST_CASE ("my_web_socket::SSLWebSocket without ssl check")
   mockServerOption.createSSLContext = [] () {
     auto sslContext = boost::beast::net::ssl::context{ boost::asio::ssl::context_base::method::tls_server };
     sslContext.set_verify_mode (boost::asio::ssl::context::verify_none);
+    
     // TODO use test Cert for SERVER do not forget to use verify_none of this test
     //  sslContext.set_verify_mode (boost::asio::ssl::context::verify_peer);
     //  sslContext.set_default_verify_paths ();
@@ -153,7 +154,6 @@ TEST_CASE ("my_web_socket::SSLWebSocket")
   auto mockServerOption = my_web_socket::MockServerOption{};
   mockServerOption.createSSLContext = [] () {
     auto sslContext = boost::beast::net::ssl::context{ boost::asio::ssl::context_base::method::tls_server };
-    sslContext.set_verify_mode (boost::asio::ssl::context::verify_none);
     // TODO use test Cert for SERVER
     //  sslContext.set_verify_mode (boost::asio::ssl::context::verify_peer);
     //  sslContext.set_default_verify_paths ();

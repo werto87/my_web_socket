@@ -10,7 +10,7 @@ myWebSocket.cxx
 coSpawnPrintException.cxx
 mockServer.cxx
 )
-
+add_subdirectory(test_cert)
 
 add_library(myproject::my_web_socket ALIAS my_web_socket)
 set(Logging)
