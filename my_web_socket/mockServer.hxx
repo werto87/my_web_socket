@@ -40,7 +40,7 @@ struct MockServerOption
   std::optional<std::chrono::microseconds> mockServerRunTime{};
   std::function<boost::beast::net::ssl::context ()> createSSLContext{};
 };
-template <class T> struct MockServer
+template <class T = WebSocket> struct MockServer
 {
   MockServer (boost::asio::ip::tcp::endpoint endpoint, MockServerOption const &mockServerOption_, std::string loggingName_ = {}, fmt::text_style loggingTextStyleForName_ = {}, std::string id_ = {});
   ~MockServer ();
