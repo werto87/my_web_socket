@@ -20,5 +20,5 @@ class Project(ConanFile):
     def requirements(self):
         self.requires("boost/1.85.0", force=True)
         self.requires("certify/cci.20201114@modern-durak")
-        self.requires("fmt/11.0.2")
+        self.requires("fmt/11.2.0")
         self.requires("catch2/2.13.7")
