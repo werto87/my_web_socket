@@ -114,21 +114,19 @@
                 "myproject_ENABLE_SANITIZER_LEAK": "ON"
             }
         },
-        {
-            "name": "microsoft-compiler",
-            "displayName": "Visual Studio Community 2022 Release - amd64",
-            "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
-            "generator": "Visual Studio 17 2022",
-            "toolset": "host=x64",
-            "architecture": "x64",
-            "binaryDir": "build/${presetName}",
-            "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "conan_toolchain.cmake",
-                "CMAKE_C_COMPILER": "cl.exe",
-                "CMAKE_CXX_COMPILER": "cl.exe"
-            }
-        }
-    ],
+    {
+      "name": "vs2022-release",
+      "displayName": "Visual Studio 2022 Release with Conan",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build/microsoft-compiler",
+      "architecture": "x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/microsoft-compiler/conan_toolchain.cmake",
+        "CMAKE_CXX_FLAGS": "/D_WIN32_WINNT=0x0A00 /EHsc"
+      }
+    }
+  ],
     "testPresets": [
         {
             "name": "sadfsa",
@@ -138,11 +136,10 @@
         }
     ],
     "buildPresets": [
-        {
-            "name": "microsoft-compiler-debug",
-            "displayName": "Visual Studio Community 2022 Release - amd64 - Debug",
-            "configurePreset": "microsoft-compiler",
-            "configuration": "Debug"
-        }
+    {
+      "name": "run this on windows build-release",
+      "configurePreset": "vs2022-release",
+      "configuration": "Release"
+    }
     ]
 }
