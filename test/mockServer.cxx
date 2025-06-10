@@ -11,7 +11,7 @@ TEST_CASE ("mockServerOption")
       auto success = bool{};
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
       {
-        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       }
       REQUIRE (success);
     }
@@ -22,7 +22,7 @@ TEST_CASE ("mockServerOption")
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success1] () { success1 = true; });
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success2] () { success2 = true; });
       {
-        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       }
       REQUIRE (success1);
       REQUIRE (success2);
@@ -39,9 +39,9 @@ TEST_CASE ("mockServerOption")
         success = true;
         ioContext.stop ();
       };
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
-      ioContext.run_for (std::chrono::seconds{ 1 });
+     ioContext.run_for (std::chrono::seconds{ 1 });
       REQUIRE (success);
     }
     SECTION ("2 callbacks called")
@@ -56,7 +56,7 @@ TEST_CASE ("mockServerOption")
         success2 = true;
         if (success1 and success2) ioContext.stop ();
       };
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("message1"), my_web_socket::printException);
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("message2"), my_web_socket::printException);
       ioContext.run_for (std::chrono::seconds{ 1 });
@@ -72,7 +72,7 @@ TEST_CASE ("mockServerOption")
     mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
     mockServerOption.shutDownServerOnMessage = "shut down";
     {
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
       ioContext.run_for (std::chrono::seconds{ 1 });
     }
@@ -86,7 +86,7 @@ TEST_CASE ("mockServerOption")
     mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
     mockServerOption.closeConnectionOnMessage = "shut down";
     {
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
       ioContext.run_for (std::chrono::seconds{ 1 });
     }
@@ -99,7 +99,7 @@ TEST_CASE ("mockServerOption")
     {
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestResponse["request"] = "response";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       SECTION ("one connection")
       {
         auto callBackCalled = bool{};
@@ -142,7 +142,7 @@ TEST_CASE ("mockServerOption")
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestResponse["request1"] = "response1";
       mockServerOption.requestResponse["request2"] = "response2";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       auto callBackCalledCount = uint64_t{};
       boost::asio::co_spawn (ioContext,
                              sendMessageToWebSocketStartReadingHandleResponse (std::vector{ "request1", "request2" },
@@ -171,7 +171,7 @@ TEST_CASE ("mockServerOption")
     {
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestStartsWithResponse["request"] = "response";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       SECTION ("one connection")
       {
         auto callBackCalled = bool{};
@@ -214,7 +214,7 @@ TEST_CASE ("mockServerOption")
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestStartsWithResponse["request1"] = "response1";
       mockServerOption.requestStartsWithResponse["request2"] = "response2";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       auto callBackCalledCount = uint64_t{};
       boost::asio::co_spawn (ioContext,
                              sendMessageToWebSocketStartReadingHandleResponse (std::vector{ "request1abc", "request2abc" },
@@ -246,7 +246,7 @@ TEST_CASE ("mockServerOption")
     using std::chrono::duration_cast;
     using std::chrono::high_resolution_clock;
     using std::chrono::milliseconds;
-    auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+    auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
     boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("request"), my_web_socket::printException);
     auto t1 = high_resolution_clock::now ();
     ioContext.run_for (std::chrono::seconds{ 2 });

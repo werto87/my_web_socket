@@ -18,7 +18,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
         success = true;
         ioContext.stop ();
       };
-      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (
           ioContext,
           [createWebsocket] () -> boost::asio::awaitable<void> {
@@ -36,7 +36,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     {
       auto success = bool{};
       mockServerOption.requestResponse["my message"] = "response";
-      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (
           ioContext,
           [&success, &ioContext, createWebsocket] () -> boost::asio::awaitable<void> {
@@ -62,7 +62,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
         success = true;
         ioContext.stop ();
       };
-      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (
           ioContext,
           [createWebsocket] () -> boost::asio::awaitable<void> {
@@ -81,7 +81,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     {
       auto success = bool{};
       mockServerOption.requestResponse["my message"] = "response";
-      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (
           ioContext,
           [&success, &ioContext, createWebsocket] () -> boost::asio::awaitable<void> {
@@ -105,7 +105,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     {
       auto success = bool{};
       mockServerOption.closeConnectionOnMessage = "please close connection";
-      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::tcp::v4 (), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<T>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (
           ioContext,
           [&success, &ioContext, createWebsocket] () -> boost::asio::awaitable<void> {
