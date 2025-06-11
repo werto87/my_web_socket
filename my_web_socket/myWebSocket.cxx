@@ -134,8 +134,7 @@ MyWebSocket<T>::close ()
         }
       else
         {
-          std::cout << "MyWebSocket::close () Exception : " << e.what () << std::endl;
-          abort ();
+          throw;
         }
     }
 }
