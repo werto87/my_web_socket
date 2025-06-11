@@ -120,7 +120,11 @@ MyWebSocket<T>::close ()
 {
   try
     {
-      if (webSocket) webSocket->close ("close connection");
+      if (webSocket) 
+      {
+        boost::beast::get_lowest_layer(*webSocket).cancel();
+        webSocket->close ("close connection");
+      }
     }
   catch (boost::system::system_error &e)
     {

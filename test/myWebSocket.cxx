@@ -1,7 +1,7 @@
 #include "my_web_socket/test_cert/testCertClient.hxx"
 #include "my_web_socket/test_cert/testCertServer.hxx"
 #include "util.hxx"
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 template <typename T, typename U>
 void
 supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U const &createWebsocket)

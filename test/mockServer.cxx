@@ -1,5 +1,5 @@
 #include "util.hxx"
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE ("mockServerOption")
 {
@@ -249,7 +249,7 @@ TEST_CASE ("mockServerOption")
     auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
     boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("request"), my_web_socket::printException);
     auto t1 = high_resolution_clock::now ();
-    ioContext.run_for (std::chrono::seconds{ 2 });
+    ioContext.run();
     auto t2 = high_resolution_clock::now ();
     REQUIRE ((t2 - t1) < std::chrono::milliseconds{ 100 });
   }
