@@ -44,11 +44,12 @@ template <class T = WebSocket> struct MockServer
 {
   MockServer (boost::asio::ip::tcp::endpoint endpoint, MockServerOption const &mockServerOption_, std::string loggingName_ = {}, fmt::text_style loggingTextStyleForName_ = {}, std::string id_ = {});
   ~MockServer ();
-  boost::asio::awaitable<void> serverShutDownTime ();
-  boost::asio::awaitable<void> listener (boost::asio::ip::tcp::endpoint endpoint, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_);
   bool isRunning ();
 
 private:
+  boost::asio::awaitable<void> serverShutDownTime ();
+  boost::asio::awaitable<void> listener (boost::asio::ip::tcp::endpoint endpoint, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_);
+
   MockServerOption mockServerOption{};
   boost::asio::io_context ioContext;
   std::thread thread{};
