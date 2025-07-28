@@ -2,32 +2,8 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
-#include <boost/certify/extensions.hpp>
-#include <boost/certify/https_verification.hpp>
-#include <openssl/ssl3.h>
 namespace my_web_socket
 {
-
-boost::beast::net::ssl::context
-createSSLContextServer (SSLSuport const &sslSupport)
-{
-  auto sslContext = boost::beast::net::ssl::context{ boost::asio::ssl::context_base::method::tls_server };
-  if (sslSupport.sslContextVerifyNone)
-    {
-      sslContext.set_verify_mode (boost::asio::ssl::context::verify_none);
-    }
-  else
-    {
-      sslContext.set_verify_mode (boost::asio::ssl::context::verify_peer);
-    }
-  sslContext.set_default_verify_paths ();
-  sslContext.use_certificate_chain_file (sslSupport.pathToChainFile.string());
-  sslContext.use_private_key_file (sslSupport.pathToPrivateFile.string(), boost::asio::ssl::context::pem);
-  sslContext.use_tmp_dh_file (sslSupport.pathToTmpDhFile.string());
-  boost::certify::enable_native_https_server_verification (sslContext);
-  sslContext.set_options (SSL_SESS_CACHE_OFF | SSL_OP_NO_TICKET); //  disable ssl cache. It has a bad support in boost asio/beast and I do not know if it helps in performance in our usecase
-  return sslContext;
-}
 
 template <class T> MockServer<T>::MockServer (boost::asio::ip::tcp::endpoint endpoint, MockServerOption const &mockServerOption_, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_) : mockServerOption{ mockServerOption_ }
 {

@@ -19,6 +19,6 @@ class Project(ConanFile):
 
     def requirements(self):
         self.requires("boost/1.87.0", force=True)
-        self.requires("certify/cci.20201114@modern-durak")
+        self.requires("openssl/3.5.1", force=True)
         self.requires("fmt/11.2.0")
         self.requires("catch2/3.8.1")

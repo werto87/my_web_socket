@@ -30,13 +30,14 @@ endif()
 target_compile_definitions(my_web_socket PUBLIC 
 ${Logging}
 )
-find_package(certify)
+
 find_package(fmt)
 find_package(Boost)
+find_package(OpenSSL)
 target_link_libraries(my_web_socket PUBLIC
         Boost::headers
-        certify::core
         fmt::fmt
+        openssl::openssl
 )
 
 target_include_directories(my_web_socket
