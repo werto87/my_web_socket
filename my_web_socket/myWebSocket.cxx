@@ -25,6 +25,7 @@ MyWebSocket<T>::async_read_one_message ()
 #ifdef MY_WEB_SOCKET_LOG_WRITE
   printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
   fmt::print ("[r] {} \n", msg);
+  std::fflush(stdout);
 #endif
   co_return msg;
 }
@@ -48,6 +49,7 @@ MyWebSocket<T>::readLoop (std::function<void (std::string readResult)> onRead)
 #ifdef MY_WEB_SOCKET_LOG_READ
       printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
       fmt::print ("[c] \n");
+      std::fflush(stdout);
 #endif
       throw;
     }
@@ -59,6 +61,7 @@ MyWebSocket<T>::async_write_one_message (std::string message)
 #ifdef MY_WEB_SOCKET_LOG_WRITE
   printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
   fmt::print ("[w] {} \n", message);
+  std::fflush(stdout);
 #endif
   co_await webSocket->async_write (boost::asio::buffer (std::move (message)), boost::asio::use_awaitable);
 }
