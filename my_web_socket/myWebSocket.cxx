@@ -32,7 +32,7 @@ MyWebSocket<T>::async_read_one_message ()
 
 template <class T>
 inline boost::asio::awaitable<void>
-MyWebSocket<T>::readLoop (std::function<void (std::string const &readResult)> onRead)
+MyWebSocket<T>::readLoop (std::function<void (std::string readResult)> onRead)
 {
   try
     {

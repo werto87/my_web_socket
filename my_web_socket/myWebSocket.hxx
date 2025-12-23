@@ -20,7 +20,7 @@ public:
   explicit MyWebSocket (T &&webSocket_) : webSocket{ std::make_shared<T> (std::move (webSocket_)) } {}
   MyWebSocket (T &&webSocket_, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_) : webSocket{ std::make_shared<T> (std::move (webSocket_)) }, loggingName{ std::move (loggingName_) }, loggingTextStyleForName{ std::move (loggingTextStyleForName_) }, id{ std::move (id_) } {}
 
-  boost::asio::awaitable<void> readLoop (std::function<void (std::string const &readResult)> onRead);
+  boost::asio::awaitable<void> readLoop (std::function<void (std::string readResult)> onRead);
 
   boost::asio::awaitable<void> async_write_one_message (std::string message);
 

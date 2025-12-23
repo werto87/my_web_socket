@@ -87,7 +87,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               webSockets.emplace_back (MyWebSocket<T>{ std::move (webSocket), loggingName_, loggingTextStyleForName_, id_ });
             }
           auto webSocketItr = std::prev (webSockets.end ());
-          boost::asio::co_spawn (executor, webSocketItr->readLoop ([&_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (const std::string &msg) mutable {
+          boost::asio::co_spawn (executor, webSocketItr->readLoop ([&_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (std::string msg) mutable {
             for (auto const &[startsWith, callback] : _mockServerOption.callOnMessageStartsWith)
               {
                 if (boost::starts_with (msg, startsWith))
