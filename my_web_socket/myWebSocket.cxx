@@ -45,7 +45,7 @@ MyWebSocket<T>::readLoop (std::function<void (std::string readResult)> onRead)
   catch (...)
     {
       if (webSocket) webSocket.reset ();
-      if (timer) timer->cancel ();
+      if (msgQueueTimer) msgQueueTimer->cancel ();
 #ifdef MY_WEB_SOCKET_LOG_READ
       printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
       fmt::print ("[c] \n");
@@ -74,11 +74,11 @@ MyWebSocket<T>::writeLoop ()
     {
       while (not connection.expired ())
         {
-          timer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
-          timer->expires_after (std::chrono::system_clock::time_point::max () - std::chrono::system_clock::now ());
+          msgQueueTimer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
+          msgQueueTimer->expires_after (std::chrono::system_clock::time_point::max () - std::chrono::system_clock::now ());
           try
             {
-              co_await timer->async_wait ();
+              co_await msgQueueTimer->async_wait ();
             }
           catch (boost::system::system_error &e)
             {
@@ -88,7 +88,7 @@ MyWebSocket<T>::writeLoop ()
                 }
               else
                 {
-                  std::cout << "error in timer boost::system::errc: " << e.code () << std::endl;
+                  std::cout << "error in msgQueueTimer boost::system::errc: " << e.code () << std::endl;
                   abort ();
                 }
             }
@@ -103,7 +103,7 @@ MyWebSocket<T>::writeLoop ()
   catch (std::exception const &e)
     {
       webSocket.reset ();
-      if (timer) timer->cancel ();
+      if (msgQueueTimer) msgQueueTimer->cancel ();
       throw;
     }
 }
@@ -112,7 +112,7 @@ inline void
 MyWebSocket<T>::queueMessage (std::string message)
 {
   msgQueue.push_back (std::move (message));
-  if (timer) timer->cancel ();
+  if (msgQueueTimer) msgQueueTimer->cancel ();
 }
 template <class T>
 inline void
@@ -160,7 +160,7 @@ MyWebSocket<T>::sendPingToEndpoint ()
   catch (boost::system::system_error &e)
     {
       using namespace boost::system::errc;
-      std::cout << "error in timer boost::system::errc: " << e.code () << std::endl;
+      std::cout << "error in msgQueueTimer boost::system::errc: " << e.code () << std::endl;
     }
   co_return;
 }

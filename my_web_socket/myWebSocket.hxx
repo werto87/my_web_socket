@@ -43,7 +43,7 @@ private:
   fmt::text_style loggingTextStyleForName{};
   std::string id{ rndNumberAsString () };
   std::deque<std::string> msgQueue{};
-  std::shared_ptr<CoroTimer> timer{};
+  std::shared_ptr<CoroTimer> msgQueueTimer{};
 };
 
 }
