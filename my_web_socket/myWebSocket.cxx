@@ -1,7 +1,9 @@
 #include "my_web_socket/myWebSocket.hxx"
+#include "myWebSocket.hxx"
 #include "my_web_socket/coSpawnPrintException.hxx"
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <iostream>
+
 namespace my_web_socket
 {
 
@@ -145,6 +147,36 @@ MyWebSocket<T>::close ()
 
 template <class T>
 boost::asio::awaitable<void>
+MyWebSocket<T>::asyncClose ()
+{
+  if (!webSocket) co_return;
+  auto ws = webSocket;
+  try
+    {
+      if (ws)
+        {
+          co_await ws->async_close (boost::beast::websocket::close_code::normal);
+        }
+    }
+  catch (boost::system::system_error &e)
+    {
+      if (boost::asio::error::misc_errors::eof == e.code ())
+        {
+          // swallow eof
+        }
+      else if (boost::asio::error::operation_aborted == e.code ())
+        {
+          // swallow operation_aborted
+        }
+      else
+        {
+          throw;
+        }
+    }
+}
+
+template <class T>
+boost::asio::awaitable<void>
 MyWebSocket<T>::sendPingToEndpoint ()
 {
   auto weak = std::weak_ptr<T>{ webSocket };
@@ -167,6 +199,7 @@ MyWebSocket<T>::sendPingToEndpoint ()
     }
   co_return;
 }
+
 template class MyWebSocket<WebSocket>;
 template class MyWebSocket<SSLWebSocket>;
 }

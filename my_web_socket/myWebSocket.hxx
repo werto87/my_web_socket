@@ -32,6 +32,8 @@ public:
 
   boost::asio::awaitable<void> sendPingToEndpoint ();
 
+  boost::asio::awaitable<void> asyncClose ();
+
   boost::asio::awaitable<std::string> async_read_one_message ();
 
   std::shared_ptr<T> webSocket{};
