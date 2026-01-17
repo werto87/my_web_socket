@@ -111,7 +111,7 @@ TEST_CASE ("mockServerOption")
                                                                                    myWebSocket->close ();
                                                                                  }),
                                my_web_socket::printException);
-        ioContext.run_for (std::chrono::seconds{ 2 });
+        ioContext.run();
         REQUIRE (callBackCalled);
       }
       SECTION ("two connections")

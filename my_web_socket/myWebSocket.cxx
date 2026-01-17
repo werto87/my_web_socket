@@ -46,8 +46,9 @@ MyWebSocket<T>::readLoop (std::function<void (std::string readResult)> onRead)
     }
   catch (...)
     {
-      if (webSocket) webSocket.reset ();
       if (msgQueueTimer) msgQueueTimer->cancel ();
+      if (pingTimer) pingTimer->cancel ();
+      if (webSocket) webSocket.reset ();
 #ifdef MY_WEB_SOCKET_LOG_READ
       printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
       fmt::print ("[c] \n");
@@ -104,8 +105,9 @@ MyWebSocket<T>::writeLoop ()
     }
   catch (std::exception const &e)
     {
-      webSocket.reset ();
       if (msgQueueTimer) msgQueueTimer->cancel ();
+      if (pingTimer) pingTimer->cancel ();
+      if (webSocket) webSocket.reset ();
       throw;
     }
 }
@@ -127,6 +129,8 @@ MyWebSocket<T>::close ()
           boost::beast::get_lowest_layer (*webSocket).cancel ();
           webSocket->close ("close connection");
         }
+      if (msgQueueTimer) msgQueueTimer->cancel ();
+      if (pingTimer) pingTimer->cancel ();
     }
   catch (boost::system::system_error &e)
     {
@@ -156,6 +160,8 @@ MyWebSocket<T>::asyncClose ()
       if (ws)
         {
           co_await ws->async_close (boost::beast::websocket::close_code::normal);
+          if (msgQueueTimer) msgQueueTimer->cancel ();
+          if (pingTimer) pingTimer->cancel ();
         }
     }
   catch (boost::system::system_error &e)
@@ -180,13 +186,13 @@ boost::asio::awaitable<void>
 MyWebSocket<T>::sendPingToEndpoint ()
 {
   auto weak = std::weak_ptr<T>{ webSocket };
-  auto pingTimer = CoroTimer{ co_await boost::asio::this_coro::executor };
+  pingTimer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
   try
     {
       while (true)
         {
-          pingTimer.expires_after (std::chrono::seconds{ 10 });
-          co_await pingTimer.async_wait ();
+          pingTimer->expires_after (std::chrono::seconds{ 10 });
+          co_await pingTimer->async_wait ();
           auto conn = weak.lock ();
           if (!conn) co_return;
           co_await conn->async_ping ({}, boost::asio::use_awaitable);
@@ -194,8 +200,15 @@ MyWebSocket<T>::sendPingToEndpoint ()
     }
   catch (boost::system::system_error &e)
     {
-      using namespace boost::system::errc;
-      std::cout << "error in msgQueueTimer boost::system::errc: " << e.code () << std::endl;
+      if (boost::system::errc::operation_canceled == e.code ())
+        {
+          //  swallow cancel
+        }
+      else
+        {
+          using namespace boost::system::errc;
+          std::cout << "error in msgQueueTimer boost::system::errc: " << e.code () << std::endl;
+        }
     }
   co_return;
 }

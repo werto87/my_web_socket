@@ -46,6 +46,7 @@ private:
   std::string id{ rndNumberAsString () };
   std::deque<std::string> msgQueue{};
   std::shared_ptr<CoroTimer> msgQueueTimer{};
+  std::shared_ptr<CoroTimer> pingTimer{};
 };
 
 }
