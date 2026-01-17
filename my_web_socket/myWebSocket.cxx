@@ -185,15 +185,15 @@ template <class T>
 boost::asio::awaitable<void>
 MyWebSocket<T>::sendPingToEndpoint ()
 {
-  auto weak = std::weak_ptr<T>{ webSocket };
-  pingTimer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
+  auto connection = std::weak_ptr<T>{ webSocket };
   try
     {
-      while (true)
+      while (not connection.expired ())
         {
+          pingTimer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
           pingTimer->expires_after (std::chrono::seconds{ 10 });
           co_await pingTimer->async_wait ();
-          auto conn = weak.lock ();
+          auto conn = connection.lock ();
           if (!conn) co_return;
           co_await conn->async_ping ({}, boost::asio::use_awaitable);
         }
