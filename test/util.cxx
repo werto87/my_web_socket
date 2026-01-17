@@ -6,7 +6,7 @@ createMyWebSocket (boost::asio::ip::tcp::endpoint endpoint)
   auto webSocket = my_web_socket::WebSocket{ co_await boost::asio::this_coro::executor };
   co_await boost::beast::get_lowest_layer (webSocket).async_connect (endpoint);
   co_await webSocket.async_handshake (endpoint.address ().to_string () + std::to_string (endpoint.port ()), "/");
-  co_return std::make_shared<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > (my_web_socket::MyWebSocket{ std::move (webSocket) });
+  co_return std::make_shared<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > (std::move (webSocket));
 }
 
 boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > >
@@ -21,5 +21,5 @@ createMySSLWebSocketClient (boost::beast::net::ssl::context &ctx, boost::asio::i
   co_await get_lowest_layer (sslWebSocket).async_connect (endpoint, use_awaitable);
   co_await sslWebSocket.next_layer ().async_handshake (ssl::stream_base::client, use_awaitable);
   co_await sslWebSocket.async_handshake ("localhost:" + std::to_string (endpoint.port ()), "/", use_awaitable);
-  co_return std::make_shared<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > (my_web_socket::MyWebSocket{ std::move (sslWebSocket) });
+  co_return std::make_shared<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > (std::move (sslWebSocket));
 }

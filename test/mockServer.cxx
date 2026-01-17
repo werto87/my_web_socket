@@ -11,7 +11,7 @@ TEST_CASE ("mockServerOption")
       auto success = bool{};
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
       {
-        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       }
       REQUIRE (success);
     }
@@ -22,7 +22,7 @@ TEST_CASE ("mockServerOption")
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success1] () { success1 = true; });
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success2] () { success2 = true; });
       {
-        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+        auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       }
       REQUIRE (success1);
       REQUIRE (success2);
@@ -35,28 +35,30 @@ TEST_CASE ("mockServerOption")
     SECTION ("1 callback called")
     {
       auto success = bool{};
-      mockServerOption.callOnMessageStartsWith["shut down"] = [&success, &ioContext] () {
+      std::unique_ptr<my_web_socket::MockServer<my_web_socket::WebSocket> > mockServer;
+      mockServerOption.callOnMessageStartsWith["shut down"] = [&mockServer, &success, &ioContext] () {
         success = true;
-        ioContext.stop ();
+        mockServer->shutDownUsingMockServerIoContext ();
       };
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      mockServer = std::make_unique<my_web_socket::MockServer<my_web_socket::WebSocket> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
-     ioContext.run_for (std::chrono::seconds{ 1 });
+      ioContext.run ();
       REQUIRE (success);
     }
     SECTION ("2 callbacks called")
     {
       auto success1 = bool{};
       auto success2 = bool{};
-      mockServerOption.callOnMessageStartsWith["message1"] = [&success1, &success2, &ioContext] () {
+      std::unique_ptr<my_web_socket::MockServer<my_web_socket::WebSocket> > mockServer;
+      mockServerOption.callOnMessageStartsWith["message1"] = [&mockServer, &success1, &success2, &ioContext] () {
         success1 = true;
-        if (success1 and success2) ioContext.stop ();
+        if (success1 and success2) mockServer->shutDownUsingMockServerIoContext ();
       };
-      mockServerOption.callOnMessageStartsWith["message2"] = [&success1, &success2, &ioContext] () {
+      mockServerOption.callOnMessageStartsWith["message2"] = [&mockServer, &success1, &success2, &ioContext] () {
         success2 = true;
-        if (success1 and success2) ioContext.stop ();
+        if (success1 and success2) mockServer->shutDownUsingMockServerIoContext ();
       };
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      mockServer = std::make_unique<my_web_socket::MockServer<my_web_socket::WebSocket> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("message1"), my_web_socket::printException);
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("message2"), my_web_socket::printException);
       ioContext.run_for (std::chrono::seconds{ 1 });
@@ -72,9 +74,9 @@ TEST_CASE ("mockServerOption")
     mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
     mockServerOption.shutDownServerOnMessage = "shut down";
     {
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
-      ioContext.run_for (std::chrono::seconds{ 1 });
+      ioContext.run ();
     }
     REQUIRE (success);
   }
@@ -86,7 +88,7 @@ TEST_CASE ("mockServerOption")
     mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
     mockServerOption.closeConnectionOnMessage = "shut down";
     {
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
       ioContext.run_for (std::chrono::seconds{ 1 });
     }
@@ -99,19 +101,19 @@ TEST_CASE ("mockServerOption")
     {
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestResponse["request"] = "response";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       SECTION ("one connection")
       {
         auto callBackCalled = bool{};
         boost::asio::co_spawn (ioContext,
                                sendMessageToWebSocketStartReadingHandleResponse ("request",
-                                                                                 [&callBackCalled] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                                 [&callBackCalled, &mockServer] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                    REQUIRE (msg == "response");
                                                                                    callBackCalled = true;
-                                                                                   myWebSocket->close ();
+                                                                                   mockServer.shutDownUsingMockServerIoContext ();
                                                                                  }),
                                my_web_socket::printException);
-        ioContext.run();
+        ioContext.run ();
         REQUIRE (callBackCalled);
       }
       SECTION ("two connections")
@@ -119,18 +121,24 @@ TEST_CASE ("mockServerOption")
         auto callBackCalledCount = uint64_t{};
         boost::asio::co_spawn (ioContext,
                                sendMessageToWebSocketStartReadingHandleResponse ("request",
-                                                                                 [&callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                                 [&mockServer, &callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                    REQUIRE (msg == "response");
                                                                                    callBackCalledCount++;
-                                                                                   myWebSocket->close ();
+                                                                                   if (callBackCalledCount == 2)
+                                                                                     {
+                                                                                       mockServer.shutDownUsingMockServerIoContext ();
+                                                                                     }
                                                                                  }),
                                my_web_socket::printException);
         boost::asio::co_spawn (ioContext,
                                sendMessageToWebSocketStartReadingHandleResponse ("request",
-                                                                                 [&callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                                 [&mockServer, &callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                    REQUIRE (msg == "response");
                                                                                    callBackCalledCount++;
-                                                                                   myWebSocket->close ();
+                                                                                   if (callBackCalledCount == 2)
+                                                                                     {
+                                                                                       mockServer.shutDownUsingMockServerIoContext ();
+                                                                                     }
                                                                                  }),
                                my_web_socket::printException);
         ioContext.run_for (std::chrono::seconds{ 2 });
@@ -142,11 +150,11 @@ TEST_CASE ("mockServerOption")
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestResponse["request1"] = "response1";
       mockServerOption.requestResponse["request2"] = "response2";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       auto callBackCalledCount = uint64_t{};
       boost::asio::co_spawn (ioContext,
                              sendMessageToWebSocketStartReadingHandleResponse (std::vector{ "request1", "request2" },
-                                                                               [&callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                               [&mockServer, &callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                  if (msg == "response1")
                                                                                    {
                                                                                      callBackCalledCount++;
@@ -157,7 +165,7 @@ TEST_CASE ("mockServerOption")
                                                                                    }
                                                                                  if (callBackCalledCount == 2)
                                                                                    {
-                                                                                     myWebSocket->close ();
+                                                                                     mockServer.shutDownUsingMockServerIoContext ();
                                                                                    }
                                                                                }),
                              my_web_socket::printException);
@@ -171,16 +179,16 @@ TEST_CASE ("mockServerOption")
     {
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestStartsWithResponse["request"] = "response";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       SECTION ("one connection")
       {
         auto callBackCalled = bool{};
         boost::asio::co_spawn (ioContext,
                                sendMessageToWebSocketStartReadingHandleResponse ("requestabc",
-                                                                                 [&callBackCalled] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                                 [&mockServer, &callBackCalled] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                    REQUIRE (msg == "response");
                                                                                    callBackCalled = true;
-                                                                                   myWebSocket->close ();
+                                                                                   mockServer.shutDownUsingMockServerIoContext ();
                                                                                  }),
                                my_web_socket::printException);
         ioContext.run_for (std::chrono::seconds{ 2 });
@@ -191,18 +199,24 @@ TEST_CASE ("mockServerOption")
         auto callBackCalledCount = uint64_t{};
         boost::asio::co_spawn (ioContext,
                                sendMessageToWebSocketStartReadingHandleResponse ("requestabc",
-                                                                                 [&callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                                 [&mockServer, &callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                    REQUIRE (msg == "response");
                                                                                    callBackCalledCount++;
-                                                                                   myWebSocket->close ();
+                                                                                   if (callBackCalledCount == 2)
+                                                                                     {
+                                                                                       mockServer.shutDownUsingMockServerIoContext ();
+                                                                                     }
                                                                                  }),
                                my_web_socket::printException);
         boost::asio::co_spawn (ioContext,
                                sendMessageToWebSocketStartReadingHandleResponse ("requestabc",
-                                                                                 [&callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                                 [&mockServer, &callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                    REQUIRE (msg == "response");
                                                                                    callBackCalledCount++;
-                                                                                   myWebSocket->close ();
+                                                                                   if (callBackCalledCount == 2)
+                                                                                     {
+                                                                                       mockServer.shutDownUsingMockServerIoContext ();
+                                                                                     }
                                                                                  }),
                                my_web_socket::printException);
         ioContext.run_for (std::chrono::seconds{ 2 });
@@ -214,11 +228,11 @@ TEST_CASE ("mockServerOption")
       auto ioContext = boost::asio::io_context{};
       mockServerOption.requestStartsWithResponse["request1"] = "response1";
       mockServerOption.requestStartsWithResponse["request2"] = "response2";
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
       auto callBackCalledCount = uint64_t{};
       boost::asio::co_spawn (ioContext,
                              sendMessageToWebSocketStartReadingHandleResponse (std::vector{ "request1abc", "request2abc" },
-                                                                               [&callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > myWebSocket) {
+                                                                               [&mockServer, &callBackCalledCount] (std::string const &msg, std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> >) {
                                                                                  if (msg == "response1")
                                                                                    {
                                                                                      callBackCalledCount++;
@@ -229,7 +243,7 @@ TEST_CASE ("mockServerOption")
                                                                                    }
                                                                                  if (callBackCalledCount == 2)
                                                                                    {
-                                                                                     myWebSocket->close ();
+                                                                                     mockServer.shutDownUsingMockServerIoContext ();
                                                                                    }
                                                                                }),
                              my_web_socket::printException);
@@ -246,11 +260,24 @@ TEST_CASE ("mockServerOption")
     using std::chrono::duration_cast;
     using std::chrono::high_resolution_clock;
     using std::chrono::milliseconds;
-    auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+    auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
     boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("request"), my_web_socket::printException);
     auto t1 = high_resolution_clock::now ();
-    ioContext.run();
+    ioContext.run ();
     auto t2 = high_resolution_clock::now ();
     REQUIRE ((t2 - t1) < std::chrono::milliseconds{ 100 });
+  }
+  SECTION ("shutDownServerOnMessage with ping ")
+  {
+    auto ioContext = boost::asio::io_context{};
+    auto success = bool{};
+    mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
+    mockServerOption.shutDownServerOnMessage = "shut down";
+    {
+      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+      boost::asio::co_spawn (ioContext, sendPingAndMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
+      ioContext.run ();
+    }
+    REQUIRE (success);
   }
 }

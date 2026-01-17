@@ -28,8 +28,6 @@ public:
 
   void queueMessage (std::string message);
 
-  void close ();
-
   boost::asio::awaitable<void> sendPingToEndpoint ();
 
   boost::asio::awaitable<void> asyncClose ();
@@ -47,6 +45,7 @@ private:
   std::deque<std::string> msgQueue{};
   std::shared_ptr<CoroTimer> msgQueueTimer{};
   std::shared_ptr<CoroTimer> pingTimer{};
+  std::atomic_bool running{ true };
 };
 
 }

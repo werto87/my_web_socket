@@ -1,7 +1,9 @@
 #include "my_web_socket/mockServer.hxx"
+#include "mockServer.hxx"
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
+
 namespace my_web_socket
 {
 
@@ -25,7 +27,11 @@ template <class T> MockServer<T>::MockServer (boost::asio::ip::tcp::endpoint end
 }
 template <class T> MockServer<T>::~MockServer ()
 {
-  ioContext.stop ();
+  if (running.load (std::memory_order_acquire))
+    {
+      running.store (false, std::memory_order_release);
+      co_spawn (ioContext, asyncShutDown (), printException);
+    }
   thread.join ();
   for (auto &onDestruct : mockServerOption.callAtTheEndOFDestruct)
     {
@@ -39,11 +45,7 @@ MockServer<T>::serverShutDownTime ()
   auto timer = CoroTimer{ co_await boost::asio::this_coro::executor };
   timer.expires_after (mockServerOption.mockServerRunTime.value ());
   co_await timer.async_wait ();
-  for (auto &myWebSocket : webSockets)
-    {
-      myWebSocket.close ();
-    }
-  ioContext.stop ();
+  co_await asyncShutDown ();
 }
 template <class T>
 boost::asio::awaitable<void>
@@ -54,8 +56,8 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
   using boost::asio::ip::tcp;
   using tcp_acceptor = use_awaitable_t<>::as_default_on_t<tcp::acceptor>;
   auto executor = co_await this_coro::executor;
-  tcp_acceptor acceptor (executor, endpoint);
-  while (not ioContext.stopped ())
+  acceptor = std::make_unique<tcp_acceptor> (executor, endpoint);
+  while (running.load (std::memory_order_acquire))
     {
       try
         {
@@ -68,14 +70,14 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               }
               waitForServerStartedCond.notify_all ();
             }
-          auto socket = co_await acceptor.async_accept ();
+          auto socket = co_await acceptor->async_accept ();
           if constexpr (std::same_as<T, WebSocket>)
             {
               auto webSocket = T{ std::move (socket) };
               webSocket.set_option (websocket::stream_base::timeout::suggested (role_type::server));
               webSocket.set_option (websocket::stream_base::decorator ([] (websocket::response_type &res) { res.set (http::field::server, std::string (BOOST_BEAST_VERSION_STRING) + " webSocket-server-async"); }));
               co_await webSocket.async_accept ();
-              webSockets.emplace_back (MyWebSocket<T>{ std::move (webSocket), loggingName_, loggingTextStyleForName_, id_ });
+              webSockets.emplace_back (std::move (webSocket), loggingName_, loggingTextStyleForName_, id_);
             }
           else if constexpr (std::same_as<T, SSLWebSocket>)
             {
@@ -84,10 +86,10 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               webSocket.set_option (websocket::stream_base::decorator ([] (websocket::response_type &res) { res.set (http::field::server, std::string (BOOST_BEAST_VERSION_STRING) + " websocket-server-async"); }));
               co_await webSocket.next_layer ().async_handshake (ssl::stream_base::server, use_awaitable);
               co_await webSocket.async_accept (use_awaitable);
-              webSockets.emplace_back (MyWebSocket<T>{ std::move (webSocket), loggingName_, loggingTextStyleForName_, id_ });
+              webSockets.emplace_back (std::move (webSocket), loggingName_, loggingTextStyleForName_, id_);
             }
           auto webSocketItr = std::prev (webSockets.end ());
-          boost::asio::co_spawn (executor, webSocketItr->readLoop ([&_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (std::string msg) mutable {
+          boost::asio::co_spawn (executor, webSocketItr->readLoop ([this, &_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (std::string msg) mutable {
             for (auto const &[startsWith, callback] : _mockServerOption.callOnMessageStartsWith)
               {
                 if (boost::starts_with (msg, startsWith))
@@ -98,15 +100,11 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               }
             if (_mockServerOption.shutDownServerOnMessage && _mockServerOption.shutDownServerOnMessage.value () == msg)
               {
-                for (auto &webSocket_ : _webSockets)
-                  {
-                    webSocket_.close ();
-                  }
-                _ioContext.stop ();
+                co_spawn (ioContext, asyncShutDown (), printException);
               }
             else if (_mockServerOption.closeConnectionOnMessage && _mockServerOption.closeConnectionOnMessage.value () == msg)
               {
-                webSocketItr->close ();
+                co_spawn (ioContext, webSocketItr->asyncClose (), printException);
               }
             else if (_mockServerOption.requestResponse.count (msg))
               webSocketItr->queueMessage (_mockServerOption.requestResponse.at (msg));
@@ -145,10 +143,30 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
     }
 }
 template <class T>
+boost::asio::awaitable<void>
+MockServer<T>::asyncShutDown ()
+{
+  running.store (false, std::memory_order_release);
+  boost::system::error_code ec;
+  acceptor->cancel (ec);
+  acceptor->close (ec);
+  for (auto &webSocket : webSockets)
+    {
+      co_await webSocket.asyncClose ();
+    }
+}
+template <class T>
 bool
 MockServer<T>::isRunning ()
 {
-  return not ioContext.stopped ();
+  return running.load (std::memory_order_acquire);
+}
+
+template <class T>
+void
+MockServer<T>::shutDownUsingMockServerIoContext ()
+{
+  co_spawn (ioContext, asyncShutDown (), printException);
 }
 
 template class MockServer<WebSocket>;
