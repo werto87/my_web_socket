@@ -18,7 +18,7 @@ class Project(ConanFile):
         self.options["catch2"].with_benchmark = True
 
     def requirements(self):
-        self.requires("boost/1.87.0", force=True)
+        self.requires("boost/1.90.0", force=True)
         self.requires("openssl/3.5.1", force=True)
         self.requires("fmt/11.2.0")
         self.requires("catch2/3.8.1")
