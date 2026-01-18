@@ -75,8 +75,6 @@ boost::asio::awaitable<void>
 MyWebSocket<T>::writeLoop ()
 {
   if (not writeSignal) writeSignal = std::make_unique<boost::asio::experimental::channel<boost::asio::any_io_executor, void (boost::system::error_code)> > (webSocket->get_executor (), 1);
-  // try
-  //   {
   while (running.load (std::memory_order_acquire))
     {
       co_await writeSignal->async_receive (boost::asio::use_awaitable);
@@ -87,11 +85,6 @@ MyWebSocket<T>::writeLoop ()
           co_await asyncWriteOneMessage (std::move (msg));
         }
     }
-  //   }
-  // catch (boost::system::system_error const &e)
-  //   {
-  //     if (e.code () != boost::asio::error::operation_aborted) throw;
-  //   }
 }
 
 template <class T>
