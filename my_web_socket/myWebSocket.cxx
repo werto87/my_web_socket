@@ -106,6 +106,7 @@ MyWebSocket<T>::asyncClose ()
       running.store (false, std::memory_order_release);
       co_await webSocket->async_close (boost::beast::websocket::close_code::normal);
       if (pingTimer) pingTimer->cancel ();
+      if (writeSignal) writeSignal->close ();
     }
   catch (boost::system::system_error &e)
     {
@@ -115,7 +116,7 @@ MyWebSocket<T>::asyncClose ()
         }
       else if (boost::asio::error::operation_aborted == e.code ())
         {
-          // swallow operation_aborted
+          co_return;
         }
       else
         {

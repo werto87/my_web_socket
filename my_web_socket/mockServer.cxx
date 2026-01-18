@@ -52,7 +52,7 @@ MockServer<T>::serverShutDownTime ()
         }
       else if (boost::asio::error::operation_aborted == e.code ())
         {
-          // swallow operation_aborted
+          co_return;
         }
       else
         {
