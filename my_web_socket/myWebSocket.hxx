@@ -1,11 +1,13 @@
 #pragma once
 
+#include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <deque>
 #include <fmt/color.h>
+
 namespace my_web_socket
 {
 
@@ -22,12 +24,11 @@ public:
 
   boost::asio::awaitable<void> readLoop (std::function<void (std::string readResult)> onRead);
 
-
   /**
    * @brief call this to send one message. If you do not have a read loop running and you call this function consider to call asyncReadOneMessage or asyncClose for correct shutdown before my_web_socket gets destroyed
-   * 
-   * @param message 
-   * @return boost::asio::awaitable<void> 
+   *
+   * @param message
+   * @return boost::asio::awaitable<void>
    */
   boost::asio::awaitable<void> asyncWriteOneMessage (std::string message);
 
@@ -50,9 +51,9 @@ private:
   fmt::text_style loggingTextStyleForName{};
   std::string id{ rndNumberAsString () };
   std::deque<std::string> msgQueue{};
-  std::shared_ptr<CoroTimer> msgQueueTimer{};
   std::shared_ptr<CoroTimer> pingTimer{};
   std::atomic_bool running{ true };
+  std::unique_ptr<boost::asio::experimental::channel<boost::asio::any_io_executor, void (boost::system::error_code)> > writeSignal{};
 };
 
 }

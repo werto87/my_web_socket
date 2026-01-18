@@ -1,6 +1,10 @@
 #include "my_web_socket/myWebSocket.hxx"
 #include "myWebSocket.hxx"
 #include "my_web_socket/coSpawnPrintException.hxx"
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/experimental/channel.hpp>
+#include <boost/asio/redirect_error.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <iostream>
 
@@ -65,51 +69,38 @@ MyWebSocket<T>::asyncWriteOneMessage (std::string message)
 #endif
   co_await webSocket->async_write (boost::asio::buffer (std::move (message)), boost::asio::use_awaitable);
 }
+
 template <class T>
-inline boost::asio::awaitable<void>
+boost::asio::awaitable<void>
 MyWebSocket<T>::writeLoop ()
 {
-  try
+  if (not writeSignal) writeSignal = std::make_unique<boost::asio::experimental::channel<boost::asio::any_io_executor, void (boost::system::error_code)> > (webSocket->get_executor (), 1);
+  // try
+  //   {
+  while (running.load (std::memory_order_acquire))
     {
-      msgQueueTimer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
-      while (running.load (std::memory_order_acquire))
+      co_await writeSignal->async_receive (boost::asio::use_awaitable);
+      while (running && !msgQueue.empty ())
         {
-          msgQueueTimer->expires_after (std::chrono::system_clock::time_point::max () - std::chrono::system_clock::now ());
-          try
-            {
-              co_await msgQueueTimer->async_wait ();
-            }
-          catch (boost::system::system_error &e)
-            {
-              if (boost::asio::error::operation_aborted == e.code ())
-                {
-                  //  swallow cancel
-                }
-              else
-                {
-                  std::cout << "error in msgQueueTimer boost::system::errc: " << e.code () << std::endl;
-                  abort ();
-                }
-            }
-          while (running.load (std::memory_order_acquire) && not msgQueue.empty ())
-            {
-              auto tmpMsg = std::move (msgQueue.front ());
-              msgQueue.pop_front ();
-              co_await asyncWriteOneMessage (std::move (tmpMsg));
-            }
+          auto msg = std::move (msgQueue.front ());
+          msgQueue.pop_front ();
+          co_await asyncWriteOneMessage (std::move (msg));
         }
     }
-  catch (std::exception const &e)
-    {
-      throw;
-    }
+  //   }
+  // catch (boost::system::system_error const &e)
+  //   {
+  //     if (e.code () != boost::asio::error::operation_aborted) throw;
+  //   }
 }
+
 template <class T>
 inline void
 MyWebSocket<T>::queueMessage (std::string message)
 {
+  if (not writeSignal) writeSignal = std::make_unique<boost::asio::experimental::channel<boost::asio::any_io_executor, void (boost::system::error_code)> > (webSocket->get_executor (), 1);
   msgQueue.push_back (std::move (message));
-  if (msgQueueTimer) msgQueueTimer->cancel ();
+  writeSignal->try_send (boost::system::error_code{});
 }
 
 template <class T>
@@ -121,7 +112,6 @@ MyWebSocket<T>::asyncClose ()
     {
       running.store (false, std::memory_order_release);
       co_await webSocket->async_close (boost::beast::websocket::close_code::normal);
-      if (msgQueueTimer) msgQueueTimer->cancel ();
       if (pingTimer) pingTimer->cancel ();
     }
   catch (boost::system::system_error &e)
@@ -145,27 +135,12 @@ template <class T>
 boost::asio::awaitable<void>
 MyWebSocket<T>::sendPingToEndpoint ()
 {
-  try
+  pingTimer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
+  while (running.load (std::memory_order_acquire))
     {
-      pingTimer = std::make_shared<CoroTimer> (CoroTimer{ co_await boost::asio::this_coro::executor });
-      while (running.load (std::memory_order_acquire))
-        {
-          pingTimer->expires_after (std::chrono::seconds{ 10 });
-          co_await pingTimer->async_wait ();
-          co_await webSocket->async_ping ({}, boost::asio::use_awaitable);
-        }
-    }
-  catch (boost::system::system_error &e)
-    {
-      if (boost::system::errc::operation_canceled == e.code ())
-        {
-          //  swallow cancel
-        }
-      else
-        {
-          using namespace boost::system::errc;
-          std::cout << "error in msgQueueTimer boost::system::errc: " << e.code () << std::endl;
-        }
+      pingTimer->expires_after (std::chrono::seconds{ 10 });
+      co_await pingTimer->async_wait ();
+      co_await webSocket->async_ping ({}, boost::asio::use_awaitable);
     }
   co_return;
 }

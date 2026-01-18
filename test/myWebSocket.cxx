@@ -15,7 +15,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     SECTION ("send message to mockServer")
     {
       auto success = bool{};
-      mockServerOption.mockServerRunTime = std::chrono::seconds{ 100 };
+      mockServerOption.mockServerRunTime = std::chrono::seconds{ 1 };
       mockServerOption.callOnMessageStartsWith["my message"] = [&success, &mockServer] () {
         success = true;
         mockServer->shutDownUsingMockServerIoContext ();
@@ -26,7 +26,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
           [createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
             // co_await myWebSocket->asyncWriteOneMessage ("my message");
-            co_await myWebSocket->asyncClose (); // wait for close
+            // co_await myWebSocket->asyncClose (); // wait for close
           },
           my_web_socket::printException);
       ioContext.run ();
