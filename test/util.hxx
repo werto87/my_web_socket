@@ -19,13 +19,13 @@ sendMessageToWebSocketStartReadingHandleResponse (T messages, std::function<void
   using messageTyp = std::decay_t<T>;
   if constexpr (std::is_convertible_v<messageTyp, std::string>)
     {
-      co_await myWebSocket->async_write_one_message (messages);
+      co_await myWebSocket->asyncWriteOneMessage (messages);
     }
   else
     {
       for (auto const &message : messages)
         {
-          co_await myWebSocket->async_write_one_message (message);
+          co_await myWebSocket->asyncWriteOneMessage (message);
         }
     }
 }
@@ -43,13 +43,13 @@ sendPingAndMessageToWebSocketStartReadingHandleResponse (T messages, std::functi
   using messageTyp = std::decay_t<T>;
   if constexpr (std::is_convertible_v<messageTyp, std::string>)
     {
-      co_await myWebSocket->async_write_one_message (messages);
+      co_await myWebSocket->asyncWriteOneMessage (messages);
     }
   else
     {
       for (auto const &message : messages)
         {
-          co_await myWebSocket->async_write_one_message (message);
+          co_await myWebSocket->asyncWriteOneMessage (message);
         }
     }
 }

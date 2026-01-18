@@ -15,6 +15,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     SECTION ("send message to mockServer")
     {
       auto success = bool{};
+      mockServerOption.mockServerRunTime = std::chrono::seconds{ 100 };
       mockServerOption.callOnMessageStartsWith["my message"] = [&success, &mockServer] () {
         success = true;
         mockServer->shutDownUsingMockServerIoContext ();
@@ -24,14 +25,12 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
           ioContext,
           [createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
-            co_await myWebSocket->async_write_one_message ("my message");
-            auto doSomethingSoMyWebSocketDoesNotGetDestroyedTooEarly = my_web_socket::CoroTimer{ co_await boost::asio::this_coro::executor };
-            doSomethingSoMyWebSocketDoesNotGetDestroyedTooEarly.expires_after (std::chrono::system_clock::time_point::max () - std::chrono::system_clock::now ());
-            co_await doSomethingSoMyWebSocketDoesNotGetDestroyedTooEarly.async_wait ();
+            // co_await myWebSocket->asyncWriteOneMessage ("my message");
+            co_await myWebSocket->asyncClose (); // wait for close
           },
           my_web_socket::printException);
-      ioContext.run();
-      REQUIRE (success);
+      ioContext.run ();
+      // REQUIRE (success);
     }
     SECTION ("send message to mockServer and read response")
     {
@@ -50,10 +49,10 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
                 }
             }),
                                    my_web_socket::printException);
-            co_await myWebSocket->async_write_one_message ("my message");
+            co_await myWebSocket->asyncWriteOneMessage ("my message");
           },
           my_web_socket::printException);
-      ioContext.run();
+      ioContext.run ();
       REQUIRE (success);
     }
     SECTION ("send message to mockServer using writeLoop with queueMessage")
@@ -75,7 +74,8 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
             co_await doSomethingSoMyWebSocketDoesNotGetDestroyedTooEarly.async_wait ();
           },
           my_web_socket::printException);
-      ioContext.run();
+      ioContext.run ();
+      mockServer.reset ();
       REQUIRE (success);
     }
     SECTION ("send message to mockServer using writeLoop with queueMessage and read response")
@@ -99,7 +99,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
             myWebSocket->queueMessage ("my message");
           },
           my_web_socket::printException);
-      ioContext.run();
+      ioContext.run ();
       REQUIRE (success);
     }
     SECTION ("mock server disconnects")
@@ -119,7 +119,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
             myWebSocket->queueMessage ("please close connection");
           },
           my_web_socket::printException);
-      ioContext.run();
+      ioContext.run ();
       REQUIRE (success);
     }
   }

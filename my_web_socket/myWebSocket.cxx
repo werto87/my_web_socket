@@ -19,7 +19,7 @@ MyWebSocket<T>::rndNumberAsString ()
 
 template <class T>
 boost::asio::awaitable<std::string>
-MyWebSocket<T>::async_read_one_message ()
+MyWebSocket<T>::asyncReadOneMessage ()
 {
   boost::beast::flat_buffer buffer;
   co_await webSocket->async_read (buffer, boost::asio::use_awaitable);
@@ -40,7 +40,7 @@ MyWebSocket<T>::readLoop (std::function<void (std::string readResult)> onRead)
     {
       for (;;)
         {
-          auto oneMsg = co_await async_read_one_message ();
+          auto oneMsg = co_await asyncReadOneMessage ();
           onRead (std::move (oneMsg));
         }
     }
@@ -56,7 +56,7 @@ MyWebSocket<T>::readLoop (std::function<void (std::string readResult)> onRead)
 }
 template <class T>
 inline boost::asio::awaitable<void>
-MyWebSocket<T>::async_write_one_message (std::string message)
+MyWebSocket<T>::asyncWriteOneMessage (std::string message)
 {
 #ifdef MY_WEB_SOCKET_LOG_WRITE
   printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
@@ -81,7 +81,7 @@ MyWebSocket<T>::writeLoop ()
             }
           catch (boost::system::system_error &e)
             {
-              if (boost::system::errc::operation_canceled == e.code ())
+              if (boost::asio::error::operation_aborted == e.code ())
                 {
                   //  swallow cancel
                 }
@@ -95,7 +95,7 @@ MyWebSocket<T>::writeLoop ()
             {
               auto tmpMsg = std::move (msgQueue.front ());
               msgQueue.pop_front ();
-              co_await async_write_one_message (std::move (tmpMsg));
+              co_await asyncWriteOneMessage (std::move (tmpMsg));
             }
         }
     }

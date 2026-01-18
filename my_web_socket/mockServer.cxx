@@ -27,11 +27,6 @@ template <class T> MockServer<T>::MockServer (boost::asio::ip::tcp::endpoint end
 }
 template <class T> MockServer<T>::~MockServer ()
 {
-  if (running.load (std::memory_order_acquire))
-    {
-      running.store (false, std::memory_order_release);
-      co_spawn (ioContext, asyncShutDown (), printException);
-    }
   thread.join ();
   for (auto &onDestruct : mockServerOption.callAtTheEndOFDestruct)
     {
@@ -44,8 +39,26 @@ MockServer<T>::serverShutDownTime ()
 {
   auto timer = CoroTimer{ co_await boost::asio::this_coro::executor };
   timer.expires_after (mockServerOption.mockServerRunTime.value ());
-  co_await timer.async_wait ();
-  co_await asyncShutDown ();
+  try
+    {
+      co_await timer.async_wait ();
+      co_await asyncShutDown ();
+    }
+  catch (boost::system::system_error &e)
+    {
+      if (boost::asio::error::misc_errors::eof == e.code ())
+        {
+          // swallow eof
+        }
+      else if (boost::asio::error::operation_aborted == e.code ())
+        {
+          // swallow operation_aborted
+        }
+      else
+        {
+          throw;
+        }
+    }
 }
 template <class T>
 boost::asio::awaitable<void>
@@ -146,6 +159,7 @@ template <class T>
 boost::asio::awaitable<void>
 MockServer<T>::asyncShutDown ()
 {
+  if (not running.load (std::memory_order_acquire)) co_return;
   running.store (false, std::memory_order_release);
   boost::system::error_code ec;
   acceptor->cancel (ec);

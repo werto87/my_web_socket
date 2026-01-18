@@ -12,6 +12,7 @@ TEST_CASE ("mockServerOption")
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
       {
         auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+        mockServer.shutDownUsingMockServerIoContext ();
       }
       REQUIRE (success);
     }
@@ -23,6 +24,7 @@ TEST_CASE ("mockServerOption")
       mockServerOption.callAtTheEndOFDestruct.push_back ([&success2] () { success2 = true; });
       {
         auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
+        mockServer.shutDownUsingMockServerIoContext ();
       }
       REQUIRE (success1);
       REQUIRE (success2);
@@ -88,9 +90,9 @@ TEST_CASE ("mockServerOption")
     mockServerOption.callAtTheEndOFDestruct.push_back ([&success] () { success = true; });
     mockServerOption.closeConnectionOnMessage = "shut down";
     {
-      auto mockServer = my_web_socket::MockServer<my_web_socket::WebSocket>{ { boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0" };
-      boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), my_web_socket::printException);
-      ioContext.run_for (std::chrono::seconds{ 1 });
+      auto mockServer = std::make_shared<my_web_socket::MockServer<my_web_socket::WebSocket> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
+      boost::asio::co_spawn (ioContext, sendMessageToWebSocketStartReadingHandleResponse ("shut down"), [mockServer] (auto) { mockServer->shutDownUsingMockServerIoContext (); });
+      ioContext.run ();
     }
     REQUIRE (success);
   }

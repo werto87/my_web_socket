@@ -22,7 +22,14 @@ public:
 
   boost::asio::awaitable<void> readLoop (std::function<void (std::string readResult)> onRead);
 
-  boost::asio::awaitable<void> async_write_one_message (std::string message);
+
+  /**
+   * @brief call this to send one message. If you do not have a read loop running and you call this function consider to call asyncReadOneMessage or asyncClose for correct shutdown before my_web_socket gets destroyed
+   * 
+   * @param message 
+   * @return boost::asio::awaitable<void> 
+   */
+  boost::asio::awaitable<void> asyncWriteOneMessage (std::string message);
 
   boost::asio::awaitable<void> writeLoop ();
 
@@ -32,7 +39,7 @@ public:
 
   boost::asio::awaitable<void> asyncClose ();
 
-  boost::asio::awaitable<std::string> async_read_one_message ();
+  boost::asio::awaitable<std::string> asyncReadOneMessage ();
 
   std::shared_ptr<T> webSocket{};
 
