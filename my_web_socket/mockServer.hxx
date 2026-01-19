@@ -53,11 +53,11 @@ private:
   boost::asio::awaitable<void> asyncShutDown ();
 
   MockServerOption mockServerOption{};
-  boost::asio::io_context ioContext;
+  boost::asio::io_context ioContext{};
   std::thread thread{};
   std::list<MyWebSocket<T> > webSockets{};
   std::mutex waitForServerStarted{};
-  std::condition_variable waitForServerStartedCond;
+  std::condition_variable waitForServerStartedCond{};
   bool serverStarted = false;
   std::optional<boost::beast::net::ssl::context> sslContext{};
   std::atomic_bool running{ true };
