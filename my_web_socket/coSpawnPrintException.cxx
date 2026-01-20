@@ -3,6 +3,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <fmt/color.h>
 #include <iostream>
+#include <syncstream>
 namespace my_web_socket
 {
 
