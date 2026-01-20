@@ -3,6 +3,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
+#include <syncstream>
 
 namespace my_web_socket
 {
@@ -135,7 +136,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
                   }
                 if (not msgFound)
                   {
-                    std::cout << "unhandled message: " << msg << std::endl;
+                    std::osyncstream (std::cout) << "unhandled message: " << msg << std::endl;
                   }
               }
           }) && webSocketItr->writeLoop (),
@@ -150,7 +151,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
         }
       catch (std::exception const &e)
         {
-          std::cout << "MockServer::listener ()  Exception : " << e.what () << std::endl;
+          std::osyncstream (std::cout) << "MockServer::listener ()  Exception : " << e.what () << std::endl;
           throw e;
         }
     }
