@@ -19,7 +19,7 @@ printExceptionHelper (std::exception_ptr eptr)
     }
   catch (std::exception const &e)
     {
-      std::cout << "co_spawn exception: '" << e.what () << "'" << std::endl;
+      std::osyncstream (std::cout) << "co_spawn exception: '" << e.what () << "'" << std::endl;
     }
 }
 #else
