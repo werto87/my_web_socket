@@ -104,7 +104,15 @@ MyWebSocket<T>::asyncClose ()
   try
     {
       running.store (false, std::memory_order_release);
-      boost::beast::get_lowest_layer (*webSocket).expires_after (std::chrono::seconds{ 2 });
+      boost::beast::websocket::stream_base::timeout t;
+
+      // Only override what you care about
+
+      // (optional)
+      t.handshake_timeout = std::chrono::seconds{ 2 };
+      t.idle_timeout = boost::beast::websocket::stream_base::none ();
+
+      webSocket->set_option (t);
       co_await webSocket->async_close (boost::beast::websocket::close_code::normal);
       if (pingTimer) pingTimer->cancel ();
       if (writeSignal) writeSignal->close ();
