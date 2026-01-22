@@ -104,11 +104,8 @@ MyWebSocket<T>::asyncClose ()
   try
     {
       running.store (false, std::memory_order_release);
+      boost::beast::get_lowest_layer (*webSocket).expires_after (std::chrono::seconds{ 2 });
       co_await webSocket->async_close (boost::beast::websocket::close_code::normal);
-      if constexpr (std::is_same_v<T, SSLWebSocket>)
-        {
-          co_await webSocket->next_layer ().async_shutdown (boost::asio::use_awaitable);
-        }
       if (pingTimer) pingTimer->cancel ();
       if (writeSignal) writeSignal->close ();
     }
