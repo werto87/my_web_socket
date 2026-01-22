@@ -101,37 +101,12 @@ boost::asio::awaitable<void>
 MyWebSocket<T>::asyncClose ()
 {
   if (not running.load (std::memory_order_acquire)) co_return;
-  try
-    {
-      running.store (false, std::memory_order_release);
-      boost::beast::websocket::stream_base::timeout t;
-
-      // Only override what you care about
-
-      // (optional)
-      t.handshake_timeout = std::chrono::seconds{ 2 };
-      t.idle_timeout = boost::beast::websocket::stream_base::none ();
-
-      webSocket->set_option (t);
-      co_await webSocket->async_close (boost::beast::websocket::close_code::normal);
-      if (pingTimer) pingTimer->cancel ();
-      if (writeSignal) writeSignal->close ();
-    }
-  catch (boost::system::system_error &e)
-    {
-      if (boost::asio::error::misc_errors::eof == e.code ())
-        {
-          // swallow eof
-        }
-      else if (boost::asio::error::operation_aborted == e.code ())
-        {
-          co_return;
-        }
-      else
-        {
-          throw;
-        }
-    }
+  running.store (false, std::memory_order_release);
+  webSocket->set_option (boost::beast::websocket::stream_base::timeout{ .handshake_timeout = std::chrono::milliseconds{ 1 } }); // do not wait longer than 1 millisecond for handshake close
+  auto ec = boost::system::error_code{};
+  co_await webSocket->async_close (boost::beast::websocket::close_code::normal, boost::asio::redirect_error (boost::asio::use_awaitable, ec));
+  if (pingTimer) pingTimer->cancel ();
+  if (writeSignal) writeSignal->close ();
 }
 
 template <class T>
