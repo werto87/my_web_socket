@@ -84,14 +84,14 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
           ioContext,
           [&success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
-            boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () || myWebSocket->readLoop ([&success, &mockServer, myWebSocket] (std::string message) {
+            boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([&success, &mockServer, myWebSocket] (std::string message) {
               if (message == "response")
                 {
                   success = true;
                   mockServer->shutDownUsingMockServerIoContext ();
                 }
             }),
-                                   my_web_socket::printException);
+                                   [myWebSocket] (auto) {});
             myWebSocket->queueMessage ("my message");
           },
           my_web_socket::printException);
