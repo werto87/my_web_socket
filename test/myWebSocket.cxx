@@ -1,3 +1,4 @@
+#include "my_web_socket/coSpawnTraced.hxx"
 #include "my_web_socket/test_cert/testCertClient.hxx"
 #include "my_web_socket/test_cert/testCertServer.hxx"
 #include "util.hxx"
@@ -22,14 +23,16 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
         mockServer->shutDownUsingMockServerIoContext ();
       };
       mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
-      boost::asio::co_spawn (
+      my_web_socket::coSpawnTraced (
           ioContext,
           [createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
             co_await myWebSocket->asyncWriteOneMessage ("my message");
             co_await myWebSocket->asyncClose ();
-          },
-          my_web_socket::printException);
+          }
+          // todo find a way so we do not have to use here '()'
+          ,
+          "test");
       ioContext.run ();
       REQUIRE (success);
     }
@@ -38,21 +41,21 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
       auto success = bool{};
       mockServerOption.requestResponse["my message"] = "response";
       mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
-      boost::asio::co_spawn (
+      my_web_socket::coSpawnTraced (
           ioContext,
           [&success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
-            boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([&success, &mockServer, myWebSocket] (std::string message) {
+            my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([&success, &mockServer, myWebSocket] (std::string message) {
               if (message == "response")
                 {
                   success = true;
                   mockServer->shutDownUsingMockServerIoContext ();
                 }
             }),
-                                   my_web_socket::printException);
+                                            "test");
             co_await myWebSocket->asyncWriteOneMessage ("my message");
           },
-          my_web_socket::printException);
+          "test");
       ioContext.run ();
       REQUIRE (success);
     }
@@ -64,14 +67,14 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
         mockServer->shutDownUsingMockServerIoContext ();
       };
       mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
-      boost::asio::co_spawn (
+      my_web_socket::coSpawnTraced (
           ioContext,
           [createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
-            boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([] (auto) {}), [myWebSocket] (auto) {});
+            my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([] (auto) {}), "test", [myWebSocket] (auto) {});
             myWebSocket->queueMessage ("my message");
           },
-          my_web_socket::printException);
+          "test");
       ioContext.run ();
       REQUIRE (success);
     }
@@ -80,21 +83,21 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
       auto success = bool{};
       mockServerOption.requestResponse["my message"] = "response";
       mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
-      boost::asio::co_spawn (
+      my_web_socket::coSpawnTraced (
           ioContext,
           [&success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
-            boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([&success, &mockServer, myWebSocket] (std::string message) {
+            my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([&success, &mockServer, myWebSocket] (std::string message) {
               if (message == "response")
                 {
                   success = true;
                   mockServer->shutDownUsingMockServerIoContext ();
                 }
             }),
-                                   [myWebSocket] (auto) {});
+                                            "test", [myWebSocket] (auto) {});
             myWebSocket->queueMessage ("my message");
           },
-          my_web_socket::printException);
+          "test");
       ioContext.run ();
       REQUIRE (success);
     }
@@ -103,18 +106,18 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
       auto success = bool{};
       mockServerOption.closeConnectionOnMessage = "please close connection";
       mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", fmt::fg (fmt::color::violet), "0");
-      boost::asio::co_spawn (
+      my_web_socket::coSpawnTraced (
           ioContext,
           [&success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void> {
             auto myWebSocket = co_await createWebsocket ();
             using namespace boost::asio::experimental::awaitable_operators;
-            boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([] (std::string) {}), [myWebSocket, &success, &mockServer] (auto) {
+            my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([] (std::string) {}), "test", [myWebSocket, &success, &mockServer] (auto) {
               success = true;
               mockServer->shutDownUsingMockServerIoContext ();
             });
             myWebSocket->queueMessage ("please close connection");
           },
-          my_web_socket::printException);
+          "test");
       ioContext.run ();
       REQUIRE (success);
     }

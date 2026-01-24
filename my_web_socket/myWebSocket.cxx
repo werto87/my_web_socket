@@ -1,6 +1,5 @@
 #include "my_web_socket/myWebSocket.hxx"
 #include "myWebSocket.hxx"
-#include "my_web_socket/coSpawnPrintException.hxx"
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/redirect_error.hpp>

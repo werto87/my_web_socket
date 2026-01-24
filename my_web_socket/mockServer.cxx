@@ -1,5 +1,6 @@
 #include "my_web_socket/mockServer.hxx"
 #include "mockServer.hxx"
+#include "my_web_socket/coSpawnTraced.hxx"
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
@@ -21,7 +22,7 @@ template <class T> MockServer<T>::MockServer (boost::asio::ip::tcp::endpoint end
           throw std::logic_error{ "if you want to use SSLWebsocket you have to set mock server option ssl support" };
         }
     }
-  co_spawn (ioContext, listener (endpoint, loggingName_, loggingTextStyleForName_, id_), printException);
+  coSpawnTraced (ioContext, listener (endpoint, loggingName_, loggingTextStyleForName_, id_), "MockServer listener");
   thread = std::thread{ [this] () { ioContext.run (); } };
   auto lk = std::unique_lock<std::mutex>{ waitForServerStarted };
   waitForServerStartedCond.wait (lk, [this] { return serverStarted; }); // checks if serverStarted is true and if not waits for waitForServerStartedCond notify and serverStarted == true
@@ -103,7 +104,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               webSockets.emplace_back (std::move (webSocket), loggingName_, loggingTextStyleForName_, id_);
             }
           auto webSocketItr = std::prev (webSockets.end ());
-          boost::asio::co_spawn (executor, webSocketItr->readLoop ([this, &_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (std::string msg) mutable {
+          coSpawnTraced (executor, webSocketItr->readLoop ([this, &_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (std::string msg) mutable {
             for (auto const &[startsWith, callback] : _mockServerOption.callOnMessageStartsWith)
               {
                 if (boost::starts_with (msg, startsWith))
@@ -114,11 +115,11 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               }
             if (_mockServerOption.shutDownServerOnMessage && _mockServerOption.shutDownServerOnMessage.value () == msg)
               {
-                co_spawn (ioContext, asyncShutDown (), printException);
+                coSpawnTraced (ioContext, asyncShutDown (), "MockServer shutDownServerOnMessage asyncShutDown");
               }
             else if (_mockServerOption.closeConnectionOnMessage && _mockServerOption.closeConnectionOnMessage.value () == msg)
               {
-                co_spawn (ioContext, webSocketItr->asyncClose (), printException);
+                coSpawnTraced (ioContext, webSocketItr->asyncClose (), "MockServer closeConnectionOnMessage asyncClose");
               }
             else if (_mockServerOption.requestResponse.count (msg))
               webSocketItr->queueMessage (_mockServerOption.requestResponse.at (msg));
@@ -140,18 +141,14 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
                   }
               }
           }) && webSocketItr->writeLoop (),
-                                 [&_webSockets = webSockets, webSocketItr] (auto eptr) {
-                                   printException (eptr);
-                                   _webSockets.erase (webSocketItr);
-                                 });
+                           "MockServer read and write", [&_webSockets = webSockets, webSocketItr] (auto eptr) { _webSockets.erase (webSocketItr); });
           if (mockServerOption.mockServerRunTime)
             {
-              co_spawn (ioContext, serverShutDownTime (), printException);
+              coSpawnTraced (ioContext, serverShutDownTime (), "serverShutDownTime");
             }
         }
       catch (std::exception const &e)
         {
-          std::osyncstream (std::cout) << "MockServer::listener ()  Exception : " << e.what () << std::endl;
           throw e;
         }
     }
@@ -181,7 +178,7 @@ template <class T>
 void
 MockServer<T>::shutDownUsingMockServerIoContext ()
 {
-  co_spawn (ioContext, asyncShutDown (), printException);
+  coSpawnTraced (ioContext, asyncShutDown (), "MockServer shutDownUsingMockServerIoContext asyncShutDown");
 }
 
 template class MockServer<WebSocket>;

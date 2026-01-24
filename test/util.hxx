@@ -1,4 +1,5 @@
 #pragma once
+#include "my_web_socket/coSpawnTraced.hxx"
 #include "my_web_socket/mockServer.hxx"
 #include <boost/asio/co_spawn.hpp>
 
@@ -11,11 +12,11 @@ sendMessageToWebSocketStartReadingHandleResponse (T messages, std::function<void
 {
   auto myWebSocket = co_await createMyWebSocket ();
   using namespace boost::asio::experimental::awaitable_operators;
-  boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->sendPingToEndpoint (), my_web_socket::printException);
-  boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([myWebSocket, handleResponse] (std::string msg) {
+  my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->sendPingToEndpoint (), "test");
+  my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->readLoop ([myWebSocket, handleResponse] (std::string msg) {
     if (handleResponse) handleResponse (msg, myWebSocket);
   }),
-                         my_web_socket::printException);
+                                  "test");
   using messageTyp = std::decay_t<T>;
   if constexpr (std::is_convertible_v<messageTyp, std::string>)
     {
@@ -36,10 +37,10 @@ sendPingAndMessageToWebSocketStartReadingHandleResponse (T messages, std::functi
 {
   auto myWebSocket = co_await createMyWebSocket ();
   using namespace boost::asio::experimental::awaitable_operators;
-  boost::asio::co_spawn (co_await boost::asio::this_coro::executor, myWebSocket->sendPingToEndpoint () && myWebSocket->readLoop ([myWebSocket, handleResponse] (std::string msg) {
+  my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->sendPingToEndpoint () && myWebSocket->readLoop ([myWebSocket, handleResponse] (std::string msg) {
     if (handleResponse) handleResponse (msg, myWebSocket);
   }),
-                         [myWebSocket] (auto) {}); // myWebSocket has to life until here. if we remove it from here it will die after readLoop ends and we get an read after free
+                                  "test", [myWebSocket] (auto) {}); // myWebSocket has to life until here. if we remove it from here it will die after readLoop ends and we get an read after free
   using messageTyp = std::decay_t<T>;
   if constexpr (std::is_convertible_v<messageTyp, std::string>)
     {

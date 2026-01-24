@@ -6,9 +6,8 @@
 
 
 add_library(my_web_socket
-myWebSocket.cxx
-coSpawnPrintException.cxx
-mockServer.cxx
+  myWebSocket.cxx
+  mockServer.cxx
 )
 add_subdirectory(test_cert)
 
@@ -27,36 +26,36 @@ if(LOG_BOOST_ASIO)
   list(APPEND Logging BOOST_ASIO_ENABLE_HANDLER_TRACKING)
 endif()
 
-target_compile_definitions(my_web_socket PUBLIC 
-${Logging}
+target_compile_definitions(my_web_socket PUBLIC
+  ${Logging}
 )
 
 find_package(fmt)
 find_package(Boost)
 find_package(OpenSSL)
 target_link_libraries(my_web_socket PUBLIC
-        Boost::headers
-        fmt::fmt
-        openssl::openssl
+  Boost::headers
+  fmt::fmt
+  openssl::openssl
 )
 
 target_include_directories(my_web_socket
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-        )
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+)
 
 target_compile_features(my_web_socket PUBLIC cxx_std_20)
 
 set_target_properties(
-        my_web_socket
-        PROPERTIES VERSION ${PROJECT_VERSION}
-        CXX_VISIBILITY_PRESET hidden
-        VISIBILITY_INLINES_HIDDEN YES)
+  my_web_socket
+  PROPERTIES VERSION ${PROJECT_VERSION}
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN YES)
 
 install(FILES
-        myWebSocket.hxx
-        mockServer.hxx
-        coSpawnPrintException.hxx
-        DESTINATION include/my_web_socket
-        )
+  coSpawnTraced.hxx
+  myWebSocket.hxx
+  mockServer.hxx
+  DESTINATION include/my_web_socket
+)
 install(TARGETS my_web_socket DESTINATION lib)
