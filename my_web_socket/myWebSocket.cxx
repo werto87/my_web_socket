@@ -1,5 +1,6 @@
 #include "my_web_socket/myWebSocket.hxx"
 #include "myWebSocket.hxx"
+#include "my_web_socket/coSpawnTraced.hxx"
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/redirect_error.hpp>
@@ -9,6 +10,20 @@
 
 namespace my_web_socket
 {
+
+inline void
+printTagWithPadding (std::string const &tag, fmt::text_style const &style, size_t maxLength)
+{
+  if (maxLength < 3) throw std::logic_error{ "maxLength should be min 3" };
+  if (tag.length () > maxLength)
+    {
+      fmt::print (style, fmt::runtime ("[{:<" + std::to_string (maxLength) + "}]"), std::string{ tag.begin (), tag.begin () + boost::numeric_cast<int> (maxLength) - 3 } + "...");
+    }
+  else
+    {
+      fmt::print (style, "[{}]{}", tag, std::string (maxLength - tag.size (), '-'));
+    }
+}
 
 template <class T>
 std::string

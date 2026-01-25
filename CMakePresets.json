@@ -138,9 +138,9 @@
                 "CMAKE_CXX_FLAGS": "/D_WIN32_WINNT=0x0A00 /EHsc /bigobj",
                 "myproject_ENABLE_SANITIZER_ADDRESS": "ON",
                 "LOG_CO_SPAWN_PRINT_EXCEPTIONS": "ON",
-                "LOG_WRITE": "OFF",
-                "LOG_READ": "OFF",
-                "LOG_BOOST_ASIO": "OFF"
+                "LOG_WRITE": "ON",
+                "LOG_READ": "ON",
+                "LOG_BOOST_ASIO": "ON"
             }
         }
     ],

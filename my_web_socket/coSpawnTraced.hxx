@@ -3,9 +3,10 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/system/system_error.hpp>
-
 #include <exception>
+#include <fmt/color.h>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -13,7 +14,7 @@
 #include <type_traits>
 #include <utility>
 
-// mostly ai generated
+// mostly ai generated start
 namespace my_web_socket
 {
 
@@ -73,7 +74,7 @@ coSpawnTraced (Executor ex, AwaitableOrFactory &&awaitableOrFactory, std::string
               }
             catch (std::exception const &e)
               {
-                std::osyncstream (std::cerr) << "[" << name << "] exception: " << e.what () << "\n";
+                std::osyncstream (std::cerr) << "[" << name << "] exception\n" << e.what () << "\n";
               }
           }
 #endif
@@ -88,3 +89,5 @@ coSpawnTraced (boost::asio::io_context &ioContext, AwaitableOrFactory &&awaitabl
 }
 
 } // namespace my_web_socket
+
+// mostly ai generated stop
