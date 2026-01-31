@@ -54,7 +54,7 @@ private:
   MockServerOption mockServerOption{};
   boost::asio::io_context ioContext{};
   std::thread thread{};
-  std::list<MyWebSocket<T> > webSockets{};
+  std::list<std::shared_ptr<MyWebSocket<T>> > webSockets{};
   std::mutex waitForServerStarted{};
   std::condition_variable waitForServerStartedCond{};
   bool serverStarted = false;

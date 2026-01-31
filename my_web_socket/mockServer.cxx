@@ -92,7 +92,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               webSocket.set_option (websocket::stream_base::timeout::suggested (role_type::server));
               webSocket.set_option (websocket::stream_base::decorator ([] (websocket::response_type &res) { res.set (http::field::server, std::string (BOOST_BEAST_VERSION_STRING) + " webSocket-server-async"); }));
               co_await webSocket.async_accept ();
-              webSockets.emplace_back (std::move (webSocket), loggingName_, loggingTextStyleForName_, id_);
+              webSockets.emplace_back (std::make_shared<MyWebSocket<WebSocket> > (std::move (webSocket), loggingName_, loggingTextStyleForName_, id_));
             }
           else if constexpr (std::same_as<T, SSLWebSocket>)
             {
@@ -101,10 +101,10 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               webSocket.set_option (websocket::stream_base::decorator ([] (websocket::response_type &res) { res.set (http::field::server, std::string (BOOST_BEAST_VERSION_STRING) + " websocket-server-async"); }));
               co_await webSocket.next_layer ().async_handshake (ssl::stream_base::server, use_awaitable);
               co_await webSocket.async_accept (use_awaitable);
-              webSockets.emplace_back (std::move (webSocket), loggingName_, loggingTextStyleForName_, id_);
+              webSockets.emplace_back (std::make_shared<MyWebSocket<SSLWebSocket> > (std::move (webSocket), loggingName_, loggingTextStyleForName_, id_));
             }
           auto webSocketItr = std::prev (webSockets.end ());
-          coSpawnTraced (executor, webSocketItr->readLoop ([this, &_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (std::string msg) mutable {
+          coSpawnTraced (executor, (*webSocketItr)->readLoop ([this, &_webSockets = webSockets, webSocketItr, &_mockServerOption = mockServerOption, &_ioContext = ioContext] (std::string msg) mutable {
             for (auto const &[startsWith, callback] : _mockServerOption.callOnMessageStartsWith)
               {
                 if (boost::starts_with (msg, startsWith))
@@ -119,10 +119,10 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
               }
             else if (_mockServerOption.closeConnectionOnMessage && _mockServerOption.closeConnectionOnMessage.value () == msg)
               {
-                coSpawnTraced (ioContext, webSocketItr->asyncClose (), "MockServer closeConnectionOnMessage asyncClose");
+                coSpawnTraced (ioContext, (*webSocketItr)->asyncClose (), "MockServer closeConnectionOnMessage asyncClose");
               }
             else if (_mockServerOption.requestResponse.count (msg))
-              webSocketItr->queueMessage (_mockServerOption.requestResponse.at (msg));
+              (*webSocketItr)->queueMessage (_mockServerOption.requestResponse.at (msg));
             else if (not _mockServerOption.requestStartsWithResponse.empty ())
               {
                 auto msgFound = false;
@@ -131,7 +131,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
                     if (boost::starts_with (msg, startsWith))
                       {
                         msgFound = true;
-                        webSocketItr->queueMessage (response);
+                        (*webSocketItr)->queueMessage (response);
                         break;
                       }
                   }
@@ -140,8 +140,8 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
                     std::osyncstream (std::cout) << "unhandled message: " << msg << std::endl;
                   }
               }
-          }) && webSocketItr->writeLoop (),
-                           "MockServer read and write", [&_webSockets = webSockets, webSocketItr] (auto eptr) { _webSockets.erase (webSocketItr); });
+          }) && (*webSocketItr)->writeLoop (),
+                         "MockServer read and write", [&_webSockets = webSockets, webSocketItr] (auto eptr) { _webSockets.erase (webSocketItr); });
           if (mockServerOption.mockServerRunTime)
             {
               coSpawnTraced (ioContext, serverShutDownTime (), "serverShutDownTime");
@@ -164,7 +164,7 @@ MockServer<T>::asyncShutDown ()
   acceptor->close (ec);
   for (auto &webSocket : webSockets)
     {
-      co_await webSocket.asyncClose ();
+      co_await webSocket->asyncClose ();
     }
 }
 template <class T>
