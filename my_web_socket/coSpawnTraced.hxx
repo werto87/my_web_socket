@@ -13,7 +13,7 @@
 #include <syncstream>
 #include <type_traits>
 #include <utility>
-
+#include <spdlog/spdlog.h>
 // mostly ai generated start
 namespace my_web_socket
 {
@@ -59,12 +59,12 @@ coSpawnTraced (Executor ex, AwaitableOrFactory &&awaitableOrFactory, std::string
   boost::asio::co_spawn (
       ex,
       [awaitableOrFactory = std::forward<AwaitableOrFactory> (awaitableOrFactory), name] () mutable -> boost::asio::awaitable<void> {
-        std::osyncstream (std::cerr) << "[" << name << "] start\n";
+        spdlog::info("[{}] start", name);
         co_await detail::makeAwaitable (std::move (awaitableOrFactory));
       },
       [name, onCompletion] ([[maybe_unused]] std::exception_ptr ep) {
         if constexpr (!std::is_same_v<CompletionHandler, std::nullptr_t>) onCompletion (ep);
-        std::osyncstream (std::cerr) << "[" << name << "] finished\n";
+        spdlog::info("[{}] finished", name);
 #ifdef MY_WEB_SOCKET_LOG_CO_SPAWN_PRINT_EXCEPTIONS
         if (ep)
           {
@@ -74,7 +74,7 @@ coSpawnTraced (Executor ex, AwaitableOrFactory &&awaitableOrFactory, std::string
               }
             catch (std::exception const &e)
               {
-                std::osyncstream (std::cerr) << "[" << name << "] exception\n" << e.what () << "\n";
+                spdlog::info("[{}] exception\n{}", name, e.what());
               }
           }
 #endif

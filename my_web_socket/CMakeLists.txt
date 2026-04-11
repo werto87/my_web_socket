@@ -33,10 +33,12 @@ target_compile_definitions(my_web_socket PUBLIC
 find_package(fmt)
 find_package(Boost)
 find_package(OpenSSL)
+find_package(spdlog)
 target_link_libraries(my_web_socket PUBLIC
   Boost::headers
   fmt::fmt
   openssl::openssl
+  spdlog::spdlog
 )
 
 target_include_directories(my_web_socket

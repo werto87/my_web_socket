@@ -140,7 +140,7 @@
                 "LOG_CO_SPAWN_PRINT_EXCEPTIONS": "ON",
                 "LOG_WRITE": "ON",
                 "LOG_READ": "ON",
-                "LOG_BOOST_ASIO": "ON"
+                "LOG_BOOST_ASIO": "OFF"
             }
         }
     ],

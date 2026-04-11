@@ -137,7 +137,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
                   }
                 if (not msgFound)
                   {
-                    std::osyncstream (std::cout) << "unhandled message: " << msg << std::endl;
+                    spdlog::info("unhandled message: {}", msg);
                   }
               }
           }) && (*webSocketItr)->writeLoop (),
