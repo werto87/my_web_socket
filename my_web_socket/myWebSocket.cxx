@@ -11,20 +11,6 @@
 namespace my_web_socket
 {
 
-void
-printTagWithPadding (std::string const &tag, fmt::text_style const &style, size_t maxLength)
-{
-  if (maxLength < 3) throw std::logic_error{ "maxLength should be min 3" };
-  if (tag.length () > maxLength)
-    {
-      fmt::print (style, fmt::runtime ("[{:<" + std::to_string (maxLength) + "}]"), std::string{ tag.begin (), tag.begin () + boost::numeric_cast<int> (maxLength) - 3 } + "...");
-    }
-  else
-    {
-      fmt::print (style, "[{}]{}", tag, std::string (maxLength - tag.size (), '-'));
-    }
-}
-
 template <class T>
 std::string
 MyWebSocket<T>::rndNumberAsString ()
@@ -43,10 +29,8 @@ MyWebSocket<T>::asyncReadOneMessage ()
   boost::beast::flat_buffer buffer;
   co_await webSocket.async_read (buffer, boost::asio::use_awaitable);
   auto msg = boost::beast::buffers_to_string (buffer.data ());
-#ifdef MY_WEB_SOCKET_LOG_WRITE
-  printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
-  fmt::print ("[r] {} \n", msg);
-  std::fflush (stdout);
+#ifdef MY_WEB_SOCKET_LOG_READ
+  spdlog::info ("[{}{}] [r] '{}'", loggingName, id, msg);
 #endif
   co_return msg;
 }
@@ -69,9 +53,7 @@ MyWebSocket<T>::readLoop (std::function<void (std::string readResult)> onRead)
       pingTimer.cancel ();
       writeSignal.close ();
 #ifdef MY_WEB_SOCKET_LOG_READ
-      printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
-      fmt::print ("[c] \n");
-      std::fflush (stdout);
+      spdlog::info ("[{}{}] [c]", loggingName, id);
 #endif
       throw;
     }
@@ -82,9 +64,7 @@ MyWebSocket<T>::asyncWriteOneMessage (std::string message)
 {
   [[maybe_unused]] auto self = this->shared_from_this ();
 #ifdef MY_WEB_SOCKET_LOG_WRITE
-  printTagWithPadding (loggingName + (loggingName.empty () ? "" : " ") + id, loggingTextStyleForName, 30);
-  fmt::print ("[w] {} \n", message);
-  std::fflush (stdout);
+  spdlog::info ("[{}{}] [w] '{}'", loggingName, id, message);
 #endif
   co_await webSocket.async_write (boost::asio::buffer (std::move (message)), boost::asio::use_awaitable);
 }

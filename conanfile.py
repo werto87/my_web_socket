@@ -23,7 +23,6 @@ class Project(ConanFile):
         deps_to_use = [
             "boost",
             "openssl",
-            "fmt",
             "spdlog"
         ]
         for pkg_name in deps_to_use:

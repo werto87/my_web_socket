@@ -41,20 +41,20 @@ struct MockServerOption
 };
 template <class T = WebSocket> struct MockServer
 {
-  MockServer (boost::asio::ip::tcp::endpoint endpoint, MockServerOption const &mockServerOption_, std::string loggingName_ = {}, fmt::text_style loggingTextStyleForName_ = {}, std::string id_ = {});
+  MockServer (boost::asio::ip::tcp::endpoint endpoint, MockServerOption const &mockServerOption_, std::string loggingName_ = {}, std::string id_ = {});
   ~MockServer ();
   bool isRunning ();
   void shutDownUsingMockServerIoContext ();
 
 private:
   boost::asio::awaitable<void> serverShutDownTime ();
-  boost::asio::awaitable<void> listener (boost::asio::ip::tcp::endpoint endpoint, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_);
+  boost::asio::awaitable<void> listener (boost::asio::ip::tcp::endpoint endpoint, std::string loggingName_, std::string id_);
   boost::asio::awaitable<void> asyncShutDown ();
 
   MockServerOption mockServerOption{};
   boost::asio::io_context ioContext{};
   std::thread thread{};
-  std::list<std::shared_ptr<MyWebSocket<T>> > webSockets{};
+  std::list<std::shared_ptr<MyWebSocket<T> > > webSockets{};
   std::mutex waitForServerStarted{};
   std::condition_variable waitForServerStartedCond{};
   bool serverStarted = false;

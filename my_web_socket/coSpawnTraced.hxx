@@ -6,7 +6,6 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/system/system_error.hpp>
 #include <exception>
-#include <fmt/color.h>
 #include <functional>
 #include <iostream>
 #include <string>

@@ -6,7 +6,6 @@
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <deque>
-#include <fmt/color.h>
 
 namespace my_web_socket
 {
@@ -19,7 +18,7 @@ template <class T> class MyWebSocket : public std::enable_shared_from_this<MyWeb
 {
 public:
   explicit MyWebSocket (T &&webSocket_) : webSocket{ std::move (webSocket_) } {}
-  MyWebSocket (T &&webSocket_, std::string loggingName_, fmt::text_style loggingTextStyleForName_, std::string id_) : webSocket{ std::move (webSocket_) }, loggingName{ std::move (loggingName_) }, loggingTextStyleForName{ std::move (loggingTextStyleForName_) }, id{ std::move (id_) } {}
+  MyWebSocket (T &&webSocket_, std::string loggingName_, std::string id_) : webSocket{ std::move (webSocket_) }, loggingName{ std::move (loggingName_) }, id{ std::move (id_) } {}
 
   void queueMessage (std::string message);
   boost::asio::awaitable<void> readLoop (std::function<void (std::string readResult)> onRead);
@@ -34,7 +33,6 @@ private:
 
   T webSocket{};
   std::string loggingName{};
-  fmt::text_style loggingTextStyleForName{};
   std::string id{ rndNumberAsString () };
   std::deque<std::string> msgQueue{};
   CoroTimer pingTimer{ webSocket.get_executor () };
