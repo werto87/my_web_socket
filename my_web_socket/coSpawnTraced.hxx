@@ -8,11 +8,11 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <syncstream>
 #include <type_traits>
 #include <utility>
-#include <spdlog/spdlog.h>
 // mostly ai generated start
 namespace my_web_socket
 {
@@ -51,33 +51,25 @@ makeAwaitable (Factory &&f, std::enable_if_t<!is_awaitable_v<Factory> && is_awai
 
 }
 
+void logException (std::exception_ptr ep, std::string const &name);
+
 template <typename Executor, typename AwaitableOrFactory, typename CompletionHandler = std::nullptr_t>
 void
 coSpawnTraced (Executor ex, AwaitableOrFactory &&awaitableOrFactory, std::string name, CompletionHandler onCompletion = nullptr)
 {
   boost::asio::co_spawn (
       ex,
-      [awaitableOrFactory = std::forward<AwaitableOrFactory> (awaitableOrFactory), name] () mutable -> boost::asio::awaitable<void> {
-        spdlog::info("[{}] start", name);
-        co_await detail::makeAwaitable (std::move (awaitableOrFactory));
-      },
-      [name, onCompletion] ([[maybe_unused]] std::exception_ptr ep) {
-        if constexpr (!std::is_same_v<CompletionHandler, std::nullptr_t>) onCompletion (ep);
-        spdlog::info("[{}] finished", name);
-#ifdef MY_WEB_SOCKET_LOG_CO_SPAWN_PRINT_EXCEPTIONS
-        if (ep)
-          {
-            try
-              {
-                std::rethrow_exception (ep);
-              }
-            catch (std::exception const &e)
-              {
-                spdlog::info("[{}] exception\n{}", name, e.what());
-              }
-          }
-#endif
-      });
+      [awaitableOrFactory = std::forward<AwaitableOrFactory> (awaitableOrFactory), name] () mutable -> boost::asio::awaitable<void>
+        {
+          spdlog::info ("[{}] start", name);
+          co_await detail::makeAwaitable (std::move (awaitableOrFactory));
+        },
+      [name, onCompletion] (std::exception_ptr ep)
+        {
+          if constexpr (!std::is_same_v<CompletionHandler, std::nullptr_t>) onCompletion (ep);
+          spdlog::info ("[{}] finished", name);
+          logException (ep, name);
+        });
 }
 
 template <typename AwaitableOrFactory, typename CompletionHandler = std::nullptr_t>

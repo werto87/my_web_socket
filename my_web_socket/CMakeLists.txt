@@ -8,6 +8,7 @@
 add_library(my_web_socket
   myWebSocket.cxx
   mockServer.cxx
+  coSpawnTraced.cxx
 )
 add_subdirectory(test_cert)
 
