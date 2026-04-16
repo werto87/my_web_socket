@@ -49,7 +49,11 @@
                 "CMAKE_TOOLCHAIN_FILE": "conan_toolchain.cmake",
                 "BUILD_TESTS": "True",
                 "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++"
+                "CMAKE_CXX_COMPILER": "g++",
+                "LOG_CO_SPAWN_PRINT_EXCEPTIONS": "ON",
+                "LOG_WRITE": "ON",
+                "LOG_READ": "ON",
+                "LOG_BOOST_ASIO": "OFF"
             }
         },
         {
