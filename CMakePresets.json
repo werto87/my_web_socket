@@ -18,7 +18,8 @@
                 "LOG_CO_SPAWN_PRINT_EXCEPTIONS": "OFF",
                 "LOG_WRITE": "OFF",
                 "LOG_READ": "OFF",
-                "LOG_BOOST_ASIO": "OFF"
+                "LOG_BOOST_ASIO": "OFF",
+                "myproject_WARNINGS_AS_ERRORS": "OFF"
             }
         },
         {

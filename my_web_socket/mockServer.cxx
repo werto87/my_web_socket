@@ -4,7 +4,6 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
-#include <syncstream>
 
 namespace my_web_socket
 {
