@@ -9,8 +9,8 @@
 #include <functional>
 #include <iostream>
 #include <spdlog/spdlog.h>
+#include <spdlog/spdlog.h>
 #include <string>
-#include <syncstream>
 #include <type_traits>
 #include <utility>
 // mostly ai generated start
