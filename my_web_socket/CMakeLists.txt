@@ -8,6 +8,7 @@
 add_library(my_web_socket
   myWebSocket.cxx
   mockServer.cxx
+  coSpawnTraced.cxx
 )
 add_subdirectory(test_cert)
 
@@ -22,9 +23,12 @@ endif()
 if(LOG_READ)
   list(APPEND Logging MY_WEB_SOCKET_LOG_READ)
 endif()
-if(LOG_BOOST_ASIO)
-  list(APPEND Logging BOOST_ASIO_ENABLE_HANDLER_TRACKING)
+if(LOG_CO_SPAWN_START_AND_FINISH)
+  list(APPEND Logging MY_WEB_SOCKET_LOG_CO_SPAWN_START_AND_FINISH)
 endif()
+
+
+
 
 target_compile_definitions(my_web_socket PUBLIC
   ${Logging}

@@ -17,8 +17,7 @@
                 "CMAKE_EXE_LINKER_FLAGS": "-stdlib=libc++",
                 "LOG_CO_SPAWN_PRINT_EXCEPTIONS": "OFF",
                 "LOG_WRITE": "OFF",
-                "LOG_READ": "OFF",
-                "LOG_BOOST_ASIO": "OFF"
+                "LOG_READ": "OFF"
             }
         },
         {
@@ -140,7 +139,7 @@
                 "LOG_CO_SPAWN_PRINT_EXCEPTIONS": "ON",
                 "LOG_WRITE": "ON",
                 "LOG_READ": "ON",
-                "LOG_BOOST_ASIO": "OFF"
+                "LOG_CO_SPAWN_START_AND_FINISH": "OFF"
             }
         }
     ],
