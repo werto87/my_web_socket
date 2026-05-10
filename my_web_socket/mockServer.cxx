@@ -157,7 +157,7 @@ MockServer<T>::listener (boost::asio::ip::tcp::endpoint endpoint, std::string lo
         }
       catch (std::exception const &e)
         {
-          throw e;
+          throw;
         }
     }
 }
