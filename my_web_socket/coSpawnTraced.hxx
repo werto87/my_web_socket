@@ -9,7 +9,6 @@
 #include <functional>
 #include <iostream>
 #include <spdlog/spdlog.h>
-#include <spdlog/spdlog.h>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -51,7 +50,10 @@ makeAwaitable (Factory &&f, std::enable_if_t<!is_awaitable_v<Factory> && is_awai
 
 }
 
-void print_exception (const std::exception &e);
+void printException (std::exception_ptr ep, std::string const &name);
+
+void printStart (std::string const &name);
+void printEnd (std::string const &name);
 
 template <typename Executor, typename AwaitableOrFactory, typename CompletionHandler = std::nullptr_t>
 void
@@ -61,34 +63,14 @@ coSpawnTraced (Executor ex, AwaitableOrFactory &&awaitableOrFactory, std::string
       ex,
       [awaitableOrFactory = std::forward<AwaitableOrFactory> (awaitableOrFactory), name] () mutable -> boost::asio::awaitable<void>
         {
-#ifdef MY_WEB_SOCKET_LOG_CO_SPAWN_START_AND_FINISH
-          spdlog::info ("[{}] start", name);
-#endif
+          printStart (name);
           co_await detail::makeAwaitable (std::move (awaitableOrFactory));
         },
-      [name, onCompletion] ([[maybe_unused]] std::exception_ptr ep)
+      [name, onCompletion] (std::exception_ptr ep)
         {
           if constexpr (!std::is_same_v<CompletionHandler, std::nullptr_t>) onCompletion (ep);
-#ifdef MY_WEB_SOCKET_LOG_CO_SPAWN_START_AND_FINISH
-          spdlog::info ("[{}] finished", name);
-#endif
-#ifdef MY_WEB_SOCKET_LOG_CO_SPAWN_PRINT_EXCEPTIONS
-          if (ep)
-            {
-              try
-                {
-                  std::rethrow_exception (ep);
-                }
-              catch (const std::exception &e)
-                {
-                  print_exception (e);
-                }
-              catch (...)
-                {
-                  spdlog::info ("[{}] unknown non-std exception", name);
-                }
-            }
-#endif
+          printEnd (name);
+          printException (ep, name);
         });
 }
 
