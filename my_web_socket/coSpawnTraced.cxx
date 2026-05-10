@@ -39,7 +39,6 @@ printException (std::exception_ptr ep, std::string const &name)
           spdlog::info ("[{}] unknown non-std exception", name);
         }
     }
-
 #endif
 }
 
