@@ -175,6 +175,14 @@ MockServer<T>::asyncShutDown ()
       co_await webSocket->asyncClose ();
     }
 }
+
+template <class T>
+uint16_t
+MockServer<T>::getPort () const
+{
+  return acceptor->local_endpoint ().port ();
+}
+
 template <class T>
 bool
 MockServer<T>::isRunning ()

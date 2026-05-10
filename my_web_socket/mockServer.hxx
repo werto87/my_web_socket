@@ -46,6 +46,9 @@ template <class T = WebSocket> struct MockServer
   bool isRunning ();
   void shutDownUsingMockServerIoContext ();
 
+
+  uint16_t getPort() const;
+
 private:
   boost::asio::awaitable<void> serverShutDownTime ();
   boost::asio::awaitable<void> listener (boost::asio::ip::tcp::endpoint endpoint, std::string loggingName_, std::string id_);

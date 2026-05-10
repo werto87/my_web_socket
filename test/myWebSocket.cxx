@@ -22,12 +22,12 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
           success = true;
           mockServer->shutDownUsingMockServerIoContext ();
         };
-      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", "0");
+      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4 (), 0 }, mockServerOption, "mock_server_test", "0");
       my_web_socket::coSpawnTraced (
           ioContext,
-          [createWebsocket] () -> boost::asio::awaitable<void>
+          [port = mockServer->getPort (), createWebsocket] () -> boost::asio::awaitable<void>
             {
-              auto myWebSocket = co_await createWebsocket ();
+              auto myWebSocket = co_await createWebsocket (port);
               co_await myWebSocket->asyncWriteOneMessage ("my message");
               co_await myWebSocket->asyncClose ();
             }
@@ -41,12 +41,12 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     {
       auto success = bool{};
       mockServerOption.requestResponse["my message"] = "response";
-      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", "0");
+      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4 (), 0 }, mockServerOption, "mock_server_test", "0");
       my_web_socket::coSpawnTraced (
           ioContext,
-          [&success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void>
+          [port = mockServer->getPort (), &success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void>
             {
-              auto myWebSocket = co_await createWebsocket ();
+              auto myWebSocket = co_await createWebsocket (port);
               my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor,
                                             myWebSocket->readLoop (
                                                 [&success, &mockServer, myWebSocket] (std::string message)
@@ -72,12 +72,12 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
           success = true;
           mockServer->shutDownUsingMockServerIoContext ();
         };
-      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", "0");
+      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4 (), 0 }, mockServerOption, "mock_server_test", "0");
       my_web_socket::coSpawnTraced (
           ioContext,
-          [createWebsocket] () -> boost::asio::awaitable<void>
+          [port = mockServer->getPort (), createWebsocket] () -> boost::asio::awaitable<void>
             {
-              auto myWebSocket = co_await createWebsocket ();
+              auto myWebSocket = co_await createWebsocket (port);
               my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([] (auto) {}), "test", [myWebSocket] (auto) {});
               myWebSocket->queueMessage ("my message");
             },
@@ -89,12 +89,12 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     {
       auto success = bool{};
       mockServerOption.requestResponse["my message"] = "response";
-      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", "0");
+      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4 (), 0 }, mockServerOption, "mock_server_test", "0");
       my_web_socket::coSpawnTraced (
           ioContext,
-          [&success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void>
+          [port = mockServer->getPort (), &success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void>
             {
-              auto myWebSocket = co_await createWebsocket ();
+              auto myWebSocket = co_await createWebsocket (port);
               my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor,
                                             myWebSocket->writeLoop ()
                                                 && myWebSocket->readLoop (
@@ -117,12 +117,12 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
     {
       auto success = bool{};
       mockServerOption.closeConnectionOnMessage = "please close connection";
-      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address ("127.0.0.1"), 11111 }, mockServerOption, "mock_server_test", "0");
+      mockServer = std::make_unique<my_web_socket::MockServer<T> > (boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4 (), 0 }, mockServerOption, "mock_server_test", "0");
       my_web_socket::coSpawnTraced (
           ioContext,
-          [&success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void>
+          [port = mockServer->getPort (), &success, &mockServer, createWebsocket] () -> boost::asio::awaitable<void>
             {
-              auto myWebSocket = co_await createWebsocket ();
+              auto myWebSocket = co_await createWebsocket (port);
               using namespace boost::asio::experimental::awaitable_operators;
               my_web_socket::coSpawnTraced (co_await boost::asio::this_coro::executor, myWebSocket->writeLoop () && myWebSocket->readLoop ([] (std::string) {}), "test",
                                             [myWebSocket, &success, &mockServer] (auto)
@@ -141,7 +141,7 @@ supperTest (my_web_socket::MockServerOption const &defaultMockServerOption, U co
 
 TEST_CASE ("my_web_socket::WebSocket")
 {
-  supperTest<my_web_socket::WebSocket> ({}, [] () -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > > { return createMyWebSocket (); });
+  supperTest<my_web_socket::WebSocket> ({}, [] (auto port) -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::WebSocket> > > { return createMyWebSocket ({ boost::asio::ip::make_address ("127.0.0.1"), port }); });
 }
 TEST_CASE ("my_web_socket::SSLWebSocket without ssl check")
 {
@@ -156,7 +156,12 @@ TEST_CASE ("my_web_socket::SSLWebSocket without ssl check")
   auto sslContext = boost::beast::net::ssl::context{ boost::beast::net::ssl::context::tlsv12_client };
   sslContext.set_verify_mode (boost::asio::ssl::context::verify_none);
   my_web_socket::test_load_client_certificate (sslContext);
-  supperTest<my_web_socket::SSLWebSocket> (mockServerOption, [&sslContext] () -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > > { return createMySSLWebSocketClient (sslContext); });
+  supperTest<my_web_socket::SSLWebSocket> (mockServerOption,
+                                           [&sslContext] (auto port) -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > >
+                                             {
+                                               //
+                                               return createMySSLWebSocketClient (sslContext, { boost::asio::ip::make_address ("127.0.0.1"), port });
+                                             });
 }
 
 TEST_CASE ("my_web_socket::SSLWebSocket")
@@ -170,5 +175,5 @@ TEST_CASE ("my_web_socket::SSLWebSocket")
     };
   auto sslContext = boost::beast::net::ssl::context{ boost::beast::net::ssl::context::tlsv12_client };
   my_web_socket::test_load_client_certificate (sslContext);
-  supperTest<my_web_socket::SSLWebSocket> (mockServerOption, [&sslContext] () -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > > { return createMySSLWebSocketClient (sslContext); });
+  supperTest<my_web_socket::SSLWebSocket> (mockServerOption, [&sslContext] (auto port) -> boost::asio::awaitable<std::shared_ptr<my_web_socket::MyWebSocket<my_web_socket::SSLWebSocket> > > { return createMySSLWebSocketClient (sslContext, { boost::asio::ip::make_address ("127.0.0.1"), port }); });
 }
