@@ -25,7 +25,7 @@ printException (std::exception_ptr ep, std::string const &name)
                       std::rethrow_exception (first);
                     }
                 }
-              catch (std::exception &const inner)
+              catch (std::exception const &inner)
                 {
                   // for some reason we only can print the first exception
                   spdlog::info ("exception: multiple exceptions (first: {})", inner.what ());
